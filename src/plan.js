@@ -58,7 +58,7 @@ function planExternal({ src, target, results, mkOutputNameFn }, name, value) {
   }
 }
 
-function plan(config) {
+function run(config) {
   config.output = config.output || {};
   const
     results = new Results(),
@@ -90,5 +90,5 @@ function plan(config) {
 };
 
 module.exports = {
-  plan
+  run
 };
