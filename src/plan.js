@@ -163,54 +163,12 @@ function run(config) {
         add(name, value);
     }
 
-    // Resolve required, pending deps
-    {
-      const loop = () => {
-        // This seems stupid, lazy way of doing it but it's been too long a day so meh
-        const changed = [false];
-        for (const [name, deps] of Object.entries(state.deps))
-          for (const dep of deps) {
-            if (state.deps[dep]) {
-              // Already registered - do nothing
-            } else if (state.pending[dep]) {
-              const fns = state.pending[dep];
-              state.pending[dep] = undefined;
-              fns.forEach(fn => fn());
-              changed[0] = true;
-            } else {
-              state.addError(`${name} referenced an unspecified asset: ${dep}`);
-            }
-          }
-        return changed[0];
-      }
-      while (loop());
-    }
-
     // Graph dependencies
-    if (state.ok()) {
-      const graph = {};
-      const add = n => {
-        if (graph[n] === undefined) {
-
-          graph[n] = null;
-          const deps = state.deps[n] || [];
-          deps.forEach(add);
-          graph[n] = {};
-          deps.forEach(d => graph[n][d] = graph[d]);
-          Object.freeze(graph[n]);
-
-        } else if (graph[n] === null) {
-          state.addError(`Circular dependency on asset: ${n}`)
-        }
-      };
-      Object.keys(state.deps).forEach(add);
-      Object.freeze(graph);
-      // if (state.ok())
-      //   console.log(graph);
-    }
+    state.resolvePending();
+    state.graphDependencies();
   }
 
-  return state.toObject();
+  return state.results();
 };
 
 module.exports = {

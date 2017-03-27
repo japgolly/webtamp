@@ -62,16 +62,64 @@ class State {
       a.push(to);
   }
 
+  /** Resolve required, pending deps */
+  resolvePending() {
+    const loop = () => {
+      // This seems stupid, lazy way of doing it but it's been too long a day so meh
+      const changed = [false];
+      for (const [name, deps] of Object.entries(this.deps))
+        for (const dep of deps) {
+          if (this.deps[dep]) {
+            // Already registered - do nothing
+          } else if (this.pending[dep]) {
+            const fns = this.pending[dep];
+            this.pending[dep] = undefined;
+            fns.forEach(fn => fn());
+            changed[0] = true;
+          } else {
+            this.addError(`${name} referenced an unspecified asset: ${dep}`);
+          }
+        }
+      return changed[0];
+    }
+    while (loop());
+  }
+
+  graphDependencies() {
+    this.graph = undefined;
+    if (this.ok()) {
+      const graph = {};
+      const add = n => {
+        if (graph[n] === undefined) {
+
+          graph[n] = null;
+          const deps = this.deps[n] || [];
+          deps.forEach(add);
+          graph[n] = {};
+          deps.forEach(d => graph[n][d] = graph[d]);
+          Object.freeze(graph[n]);
+
+        } else if (graph[n] === null) {
+          this.addError(`Circular dependency on asset: ${n}`)
+        }
+      };
+      Object.keys(this.deps).forEach(add);
+      Object.freeze(graph);
+      this.graph = graph;
+    }
+  }
+
   ok() {
     return this.errors.length == 0
   }
 
-  toObject() {
+  results() {
     return {
       ops: this.ops,
       errors: this.errors,
       warns: this.warns,
       manifest: this.manifest,
+      graph: this.graph,
     };
   }
 }

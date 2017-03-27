@@ -26,7 +26,13 @@ describe('Plan', () => {
     function assertState(cfg, addExpectations) {
       const expect = new State;
       addExpectations(expect);
-      Assert.deepEqual(Plan.run(cfg), expect.toObject());
+      const norm = o => {
+        o.graph = undefined;
+        return o;
+      }
+      const e = norm(expect.results());
+      const a = norm(Plan.run(cfg));
+      Assert.deepEqual(a, e);
     };
 
     describe('local', () => {
