@@ -17,6 +17,7 @@ class State {
   addWarn(o) {
     this.warns.push(o)
   }
+
   addManifestEntry(k, v) {
     if (this.manifest[k] && this.manifest[k] != v) {
       const o = {}
@@ -25,15 +26,6 @@ class State {
     }
     this.manifest[k] = v;
   }
-  addState(r) {
-    if (r.toObject) r = r.toObject;
-    this.ops.push(r.ops);
-    this.errors.push(r.errors);
-    this.warns.push(r.warns);
-    this.manifest = Object.assign(this.manifest, r.manifest);
-  }
-
-  // TODO this registration stuff is being conflated with manifest names
 
   registerNow(name) {
     if (this.pending[name])
