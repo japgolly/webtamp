@@ -3,13 +3,13 @@ const
   Glob = require("glob"),
   OutputName = require('./outputName'),
   Path = require('path'),
-  Results = require('./results'),
+  State = require('./state'),
   Utils = require('./utils');
 
 /**
  * @param  {String}                            src
  * @param  {String}                            target
- * @param  {Results}                           results
+ * @param  {State}                           state
  * @param  {NameTemplate => OutputNameFn}      mkOutputNameFn
  * @param  {OutputNameFn}                      outputNameFn0
  * @param  {Bool}                              inArray
@@ -20,19 +20,19 @@ const
  * @param  {Bool | Path => Maybe ManifestName} manifest
  */
 const planLocal =
-  ({ src, target, results, mkOutputNameFn }, outputNameFn0) => inArray =>
+  ({ src, target, state, mkOutputNameFn }, outputNameFn0) => inArray =>
   (name, { files, outputName, outputPath, manifest }) => {
     if (!files)
-      results.addError(`${name} missing key: file`);
+      state.addError(`${name} missing key: file`);
     else if (manifest === true && inArray)
-      results.addError(`${name} has {manifest: true} but requires an explicit name or function.`);
+      state.addError(`${name} has {manifest: true} but requires an explicit name or function.`);
     else {
       const fs = Glob.sync(files, { cwd: src, nodir: true });
       if (fs.length == 0)
-        results.addWarn(`File(s) not found: ${value[File]}`);
+        state.addWarn(`File(s) not found: ${value[File]}`);
       else {
         const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
-        results.registerNow(name);
+        state.registerNow(name);
 
         // Add each local file
         for (const f of fs) {
@@ -43,7 +43,7 @@ const planLocal =
             newName = `${outputPath}/${newName}`;
 
           // Copy file
-          results.addOp({
+          state.addOp({
             type: 'copy',
             from: [src, f],
             to: [target, newName],
@@ -51,10 +51,10 @@ const planLocal =
 
           // Add to manifest
           if (manifest) {
-            const add = n => results.addManifestEntry(n, '/' + newName);
+            const add = n => state.addManifestEntry(n, '/' + newName);
             if (manifest === true) {
               if (fs.length > 1)
-                results.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
+                state.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
               else
                 add(name);
             } else if (typeof manifest === 'string')
@@ -71,32 +71,32 @@ const planLocal =
   }
 
 const planExternal =
-  ({ src, target, results, mkOutputNameFn }) => inArray =>
+  ({ src, target, state, mkOutputNameFn }) => inArray =>
   (name, { path, manifest }) => {
     const add = name => {
-      results.registerNow(name);
-      results.addManifestEntry(name, path.replace(/^\/?/, '/'));
+      state.registerNow(name);
+      state.addManifestEntry(name, path.replace(/^\/?/, '/'));
     };
     if (!path)
-      results.addError(`${name} missing key: path`);
+      state.addError(`${name} missing key: path`);
     else {
       const desc = inArray ? `${name}:${path}` : name;
       if (typeof manifest === 'string')
         add(manifest);
       else if (typeof manifest !== 'undefined')
-        results.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifest)}`);
+        state.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifest)}`);
       else if (inArray)
-        results.addError(`${desc} requires an explicit manifest name because it's in an array.`);
+        state.addError(`${desc} requires an explicit manifest name because it's in an array.`);
       else
         add(name);
     }
   }
 
-const planRef = ({ results }) => (name, refName) => {
-  results.addDependency(name, refName);
+const planRef = ({ state }) => (name, refName) => {
+  state.addDependency(name, refName);
 }
 
-const foldAsset = (results, cases) => {
+const foldAsset = (state, cases) => {
   const go = inArray => (name, value) => {
     if (Array.isArray(value)) {
       const g = go(true);
@@ -110,10 +110,10 @@ const foldAsset = (results, cases) => {
         case 'external':
           return cases.external(inArray)(name, value);
         default:
-          results.addError(`${name} has invalid asset type: ${JSON.stringify(value.type)}`);
+          state.addError(`${name} has invalid asset type: ${JSON.stringify(value.type)}`);
       }
     else
-      results.addError(`${name} has an invalid value: ${JSON.stringify(value)}`);
+      state.addError(`${name} has an invalid value: ${JSON.stringify(value)}`);
   };
   return go(false);
 }
@@ -121,20 +121,20 @@ const foldAsset = (results, cases) => {
 function run(config) {
   config.output = config.output || {};
   const
-    results = new Results(),
+    state = new State(),
     src = Path.resolve(config.src || '.'),
     target = Path.resolve(config.output.dir || 'target'),
     outputNameFnDefaults = {},
     mkOutputNameFn = f => OutputName.make(f, outputNameFnDefaults),
-    ctx = { results, src, target, mkOutputNameFn };
+    ctx = { state, src, target, mkOutputNameFn };
   if (!FS.existsSync(src))
-    results.errors.push(`Src dir doesn't exist: ${src}`);
+    state.errors.push(`Src dir doesn't exist: ${src}`);
   if (typeof(config.assets) === 'undefined')
-    results.errors.push('config.assets undefined.');
+    state.errors.push('config.assets undefined.');
 
   const outputNameFn = mkOutputNameFn(config.output.name || '[basename]');
 
-  if (results.ok()) {
+  if (state.ok()) {
 
     const cases = {
       string: _ => planRef(ctx),
@@ -147,10 +147,10 @@ function run(config) {
       const o = config.optional;
       if (o) {
         const defer = f => inArray => (n, v) => {
-          results.registerForLater(n, () => f(inArray)(n, v));
+          state.registerForLater(n, () => f(inArray)(n, v));
         }
         const casesDeferred = Utils.mapObjectValues(cases, defer);
-        const add = foldAsset(results, casesDeferred);
+        const add = foldAsset(state, casesDeferred);
         for (const [name, value] of Object.entries(o))
           add(name, value);
       }
@@ -158,7 +158,7 @@ function run(config) {
 
     // Parse config.assets
     {
-      const add = foldAsset(results, cases);
+      const add = foldAsset(state, cases);
       for (const [name, value] of Object.entries(config.assets))
         add(name, value);
     }
@@ -168,17 +168,17 @@ function run(config) {
       const loop = () => {
         // This seems stupid, lazy way of doing it but it's been too long a day so meh
         const changed = [false];
-        for (const [name, deps] of Object.entries(results.deps))
+        for (const [name, deps] of Object.entries(state.deps))
           for (const dep of deps) {
-            if (results.deps[dep]) {
+            if (state.deps[dep]) {
               // Already registered - do nothing
-            } else if (results.pending[dep]) {
-              const fns = results.pending[dep];
-              results.pending[dep] = undefined;
+            } else if (state.pending[dep]) {
+              const fns = state.pending[dep];
+              state.pending[dep] = undefined;
               fns.forEach(fn => fn());
               changed[0] = true;
             } else {
-              results.addError(`${name} referenced an unspecified asset: ${dep}`);
+              state.addError(`${name} referenced an unspecified asset: ${dep}`);
             }
           }
         return changed[0];
@@ -187,30 +187,30 @@ function run(config) {
     }
 
     // Graph dependencies
-    if (results.ok()) {
+    if (state.ok()) {
       const graph = {};
       const add = n => {
         if (graph[n] === undefined) {
 
           graph[n] = null;
-          const deps = results.deps[n] || [];
+          const deps = state.deps[n] || [];
           deps.forEach(add);
           graph[n] = {};
           deps.forEach(d => graph[n][d] = graph[d]);
           Object.freeze(graph[n]);
 
         } else if (graph[n] === null) {
-          results.addError(`Circular dependency on asset: ${n}`)
+          state.addError(`Circular dependency on asset: ${n}`)
         }
       };
-      Object.keys(results.deps).forEach(add);
+      Object.keys(state.deps).forEach(add);
       Object.freeze(graph);
-      // if (results.ok())
+      // if (state.ok())
       //   console.log(graph);
     }
   }
 
-  return results.toObject();
+  return state.toObject();
 };
 
 module.exports = {

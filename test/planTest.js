@@ -3,7 +3,7 @@ const
   OutputName = require('../src/outputName'),
   Path = require('path'),
   Plan = require('../src/plan'),
-  Results = require('../src/results');
+  State = require('../src/state');
 
 const
   vizJs = { type: 'local', files: 'vendor/v?z.js', manifest: true },
@@ -23,8 +23,8 @@ function addSvgExpectations(expect) {
 describe('Plan', () => {
   describe('run', () => {
 
-    function assertResults(cfg, addExpectations) {
-      const expect = new Results;
+    function assertState(cfg, addExpectations) {
+      const expect = new State;
       addExpectations(expect);
       Assert.deepEqual(Plan.run(cfg), expect.toObject());
     };
@@ -37,7 +37,7 @@ describe('Plan', () => {
           output: { dir: target },
           assets: { vizJs },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addOp({
             type: 'copy',
             from: [src, 'vendor/viz.js'],
@@ -53,7 +53,7 @@ describe('Plan', () => {
           output: { dir: target },
           assets: { vizJs: { type: 'local', files: 'vendor/v?z.js' } },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addOp({
             type: 'copy',
             from: [src, 'vendor/viz.js'],
@@ -68,7 +68,7 @@ describe('Plan', () => {
           output: { dir: target },
           assets: { vizJs: { type: 'local', files: 'vendor/v?z.js', manifest: 'omgJs' } },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addOp({
             type: 'copy',
             from: [src, 'vendor/viz.js'],
@@ -84,7 +84,7 @@ describe('Plan', () => {
           output: { dir: target },
           assets: { vizJs: [vizJs] },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addError('vizJs has {manifest: true} but requires an explicit name or function.')
         });
       });
@@ -95,7 +95,7 @@ describe('Plan', () => {
           output: { dir: target, name: '[hash].[ext]' },
           assets: { vizJs },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addOp({
             type: 'copy',
             from: [src, 'vendor/viz.js'],
@@ -111,7 +111,7 @@ describe('Plan', () => {
           output: { dir: target },
           assets: { svgs },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           addSvgExpectations(expect);
         });
       });
@@ -124,7 +124,7 @@ describe('Plan', () => {
             svgs: Object.assign({ outputPath: 'img' }, svgs)
           },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           for (const i of [1, 2]) {
             const f = `image${i}.svg`;
             expect.addOp({ type: 'copy', from: [src, f], to: [target, 'img/' + f] });
@@ -141,7 +141,7 @@ describe('Plan', () => {
             svgs: Object.assign({ outputName: '[hash].[ext]' }, svgs)
           },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           const hashes = ['03f43b8f2e62bd8d9c3ccb8f9d8f8b26', '88ddfd89852406e3916e28a79407d564'];
           for (const i of [1, 2]) {
             const fi = `image${i}.svg`;
@@ -163,7 +163,7 @@ describe('Plan', () => {
             extB: { type: 'external', path: '/b.js' },
           },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addManifestEntry("extA", '/a.js');
           expect.addManifestEntry("extB", '/b.js');
         });
@@ -180,7 +180,7 @@ describe('Plan', () => {
             ],
           },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addManifestEntry("extA", '/a.js');
           expect.addManifestEntry("extB", '/b.js');
         });
@@ -197,7 +197,7 @@ describe('Plan', () => {
             ],
           },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addError("exts:a.js requires an explicit manifest name because it's in an array.");
           expect.addError("exts:b.js requires an explicit manifest name because it's in an array.");
         });
@@ -212,7 +212,7 @@ describe('Plan', () => {
             extB: { type: 'external', path: 'b.js', manifest: f => f },
           },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addError("extA has an invalid manifest: false");
           expect.addError("extB has an invalid manifest: undefined");
         });
@@ -228,7 +228,7 @@ describe('Plan', () => {
           assets: {},
           optional: { vizJs },
         };
-        assertResults(cfg, expect => {});
+        assertState(cfg, expect => {});
       });
     });
 
@@ -245,7 +245,7 @@ describe('Plan', () => {
             assets: { omg: assetValue },
             optional: { vizJs },
           };
-          assertResults(cfg, expect => {
+          assertState(cfg, expect => {
             expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
             expect.addManifestEntry('vizJs', '/viz.js');
           });
@@ -258,7 +258,7 @@ describe('Plan', () => {
           output: { dir: target },
           assets: { omg: 'omg' },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addError('Circular dependency on asset: omg');
         });
       });
@@ -269,7 +269,7 @@ describe('Plan', () => {
           output: { dir: target },
           assets: { a: 'b', b: 'a' },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           expect.addError('Circular dependency on asset: a');
         });
       });
@@ -294,7 +294,7 @@ describe('Plan', () => {
             n: [{ type: 'external', path: 'n', manifest: 'n' }]
           },
         };
-        assertResults(cfg, expect => {
+        assertState(cfg, expect => {
           addSvgExpectations(expect);
           expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
           expect.addManifestEntry('vizJs', '/viz.js');
@@ -303,8 +303,6 @@ describe('Plan', () => {
         });
       });
     });
-
-    // TODO rename results => state
 
   });
 });

@@ -1,4 +1,4 @@
-class Results {
+class State {
   constructor() {
     this.ops = [];
     this.errors = [];
@@ -25,7 +25,7 @@ class Results {
     }
     this.manifest[k] = v;
   }
-  addResults(r) {
+  addState(r) {
     if (r.toObject) r = r.toObject;
     this.ops.push(r.ops);
     this.errors.push(r.errors);
@@ -76,4 +76,4 @@ class Results {
   }
 }
 
-module.exports = Results;
+module.exports = State;
