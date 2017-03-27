@@ -33,19 +33,23 @@ class Results {
     this.manifest = Object.assign(this.manifest, r.manifest);
   }
 
-  registerTerminal(name) {
-    if (this.pending[name] || this.deps[name])
+  // TODO this registration stuff is being conflated with manifest names
+
+  registerNow(name) {
+    if (this.pending[name])
       this.addError(`Duplicate asset: ${name}`);
-    else {
-      this.deps[name] = Object.freeze([]);
-    }
+    else if (!this.deps[name])
+      this.deps[name] = [];
   }
 
   registerForLater(name, register) {
-    if (this.pending[name] || this.deps[name])
+    if (this.deps[name])
       this.addError(`Duplicate asset: ${name}`);
-    else
-      this.pending[name] = register;
+    else {
+      if (!this.pending[name])
+        this.pending[name] = [];
+      this.pending[name].push(register);
+    }
   }
 
   addDependency(from, to) {

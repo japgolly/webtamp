@@ -7,9 +7,18 @@ const
 
 const
   vizJs = { type: 'local', files: 'vendor/v?z.js', manifest: true },
+  vizJsExplicit = { type: 'local', files: 'vendor/v?z.js', manifest: 'vizJs' },
   svgs = { type: 'local', files: '*.svg', manifest: f => f.replace(/\.svg$/, 'Svg') },
   src = Path.resolve(__dirname, 'data'),
   target = '/tmp/tool-thingy';
+
+function addSvgExpectations(expect) {
+  for (const i of [1, 2]) {
+    const f = `image${i}.svg`;
+    expect.addOp({ type: 'copy', from: [src, f], to: [target, f] });
+    expect.addManifestEntry(`image${i}Svg`, '/' + f)
+  }
+}
 
 describe('Plan', () => {
   describe('run', () => {
@@ -53,6 +62,33 @@ describe('Plan', () => {
         });
       });
 
+      it('manifest string', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: { vizJs: { type: 'local', files: 'vendor/v?z.js', manifest: 'omgJs' } },
+        };
+        assertResults(cfg, expect => {
+          expect.addOp({
+            type: 'copy',
+            from: [src, 'vendor/viz.js'],
+            to: [target, 'viz.js']
+          });
+          expect.addManifestEntry('omgJs', '/viz.js')
+        });
+      });
+
+      it('manifest: true in array = error', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: { vizJs: [vizJs] },
+        };
+        assertResults(cfg, expect => {
+          expect.addError('vizJs has {manifest: true} but requires an explicit name or function.')
+        });
+      });
+
       it('hashed filename', () => {
         const cfg = {
           src,
@@ -76,11 +112,7 @@ describe('Plan', () => {
           assets: { svgs },
         };
         assertResults(cfg, expect => {
-          for (const i of [1, 2]) {
-            const f = `image${i}.svg`;
-            expect.addOp({ type: 'copy', from: [src, f], to: [target, f] });
-            expect.addManifestEntry(`image${i}Svg`, '/' + f)
-          }
+          addSvgExpectations(expect);
         });
       });
 
@@ -182,7 +214,61 @@ describe('Plan', () => {
         });
       });
 
+      it('cycle: self-reference', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: { omg: 'omg' },
+        };
+        assertResults(cfg, expect => {
+          expect.addError('Circular dependency on asset: omg');
+        });
+      });
+
+      it('cycle: a↔b', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: { a: 'b', b: 'a' },
+        };
+        assertResults(cfg, expect => {
+          expect.addError('Circular dependency on asset: a');
+        });
+      });
     });
+
+    describe('multi-feature', () => {
+      it('example #1', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: {
+            a: 'b',
+            m: [svgs, 'n'],
+          },
+          optional: {
+            x: { type: 'external', path: 'x' }, // not referenced
+            b: ['c'],
+            c: ['d', 'e', 'm'],
+            d: [vizJsExplicit, 'e'],
+            e: 'f',
+            f: { type: 'external', path: 'f' },
+            n: [{ type: 'external', path: 'n' }]
+          },
+        };
+        assertResults(cfg, expect => {
+          addSvgExpectations(expect);
+          expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
+          expect.addManifestEntry('vizJs', '/viz.js');
+          expect.addManifestEntry('f', '/f');
+          expect.addManifestEntry('m', '/m');
+          expect.addManifestEntry('n', '/n');
+        });
+      });
+    });
+
+    // TODO externals can't be used in arrays
+    // TODO rename results => state
 
   });
 });

@@ -11,26 +11,28 @@ const
  * @param  {String}                            target
  * @param  {Results}                           results
  * @param  {NameTemplate => OutputNameFn}      mkOutputNameFn
+ * @param  {OutputNameFn}                      outputNameFn0
+ * @param  {Bool}                              inArray
  * @param  {String}                            name
  * @param  {String}                            files
  * @param  {NameTemplate?}                     outputName
  * @param  {String?}                           outputPath
  * @param  {Bool | Path => Maybe ManifestName} manifest
- * @param  {OutputNameFn}                      outputNameFn0
  */
 const planLocal =
-  ({ src, target, results, mkOutputNameFn }, outputNameFn0) =>
+  ({ src, target, results, mkOutputNameFn }, outputNameFn0) => inArray =>
   (name, { files, outputName, outputPath, manifest }) => {
-
     if (!files)
       results.addError(`${name} missing key: file`);
+    else if (manifest === true && inArray)
+      results.addError(`${name} has {manifest: true} but requires an explicit name or function.`);
     else {
       const fs = Glob.sync(files, { cwd: src, nodir: true });
       if (fs.length == 0)
-        results.warns.push(`File(s) not found: ${value[File]}`);
+        results.addWarn(`File(s) not found: ${value[File]}`);
       else {
         const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
-        results.registerTerminal(name);
+        results.registerNow(name);
 
         // Add each local file
         for (const f of fs) {
@@ -51,11 +53,13 @@ const planLocal =
           if (manifest) {
             const add = n => results.addManifestEntry(n, '/' + newName);
             if (manifest === true) {
-              if (fs.length == 1)
-                add(name);
+              if (fs.length > 1)
+                results.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
               else
-                results.addWarn(`${name} has manifest: true but '${files}' matches more than 1 file.`);
-            } else {
+                add(name);
+            } else if (typeof manifest === 'string')
+              add(manifest);
+            else {
               const manifestName = manifest(f);
               if (manifestName)
                 add(manifestName);
@@ -74,7 +78,7 @@ const planExternal =
     else if (typeof(manifest) !== 'undefined')
       results.addError(`${name} is of type 'external' but contains a manifest key: ${JSON.stringify(manifest)}`);
     else {
-      results.registerTerminal(name);
+      results.registerNow(name);
       results.addManifestEntry(name, path.replace(/^\/?/, '/'));
     }
   }
@@ -84,24 +88,25 @@ const planRef = ({ results }) => (name, refName) => {
 }
 
 const foldAsset = (results, cases) => {
-  const go = (name, value) => {
-    if (Array.isArray(value))
-      for (v of value) go(name, v);
-    else if (typeof value === 'string')
-      cases.string(name, value);
+  const go = inArray => (name, value) => {
+    if (Array.isArray(value)) {
+      const g = go(true);
+      value.forEach(v => g(name, v));
+    } else if (typeof value === 'string')
+      cases.string(inArray)(name, value);
     else if (typeof value === 'object')
       switch (value.type) {
         case 'local':
-          return cases.local(name, value);
+          return cases.local(inArray)(name, value);
         case 'external':
-          return cases.external(name, value);
+          return cases.external(inArray)(name, value);
         default:
           results.addError(`${name} has invalid asset type: ${JSON.stringify(value.type)}`);
       }
     else
       results.addError(`${name} has an invalid value: ${JSON.stringify(value)}`);
   };
-  return go;
+  return go(false);
 }
 
 function run(config) {
@@ -123,17 +128,17 @@ function run(config) {
   if (results.ok()) {
 
     const cases = {
-      string: planRef(ctx),
+      string: _ => planRef(ctx),
       local: planLocal(ctx, outputNameFn),
-      external: planExternal(ctx),
+      external: _ => planExternal(ctx),
     }
 
     // Parse config.optional
     {
       const o = config.optional;
       if (o) {
-        const defer = f => (n, v) => {
-          results.registerForLater(n, () => f(n, v));
+        const defer = f => inArray => (n, v) => {
+          results.registerForLater(n, () => f(inArray)(n, v));
         }
         const casesDeferred = Utils.mapObjectValues(cases, defer);
         const add = foldAsset(results, casesDeferred);
@@ -149,21 +154,50 @@ function run(config) {
         add(name, value);
     }
 
-    // Graph dependencies
+    // Resolve required, pending deps
     {
-      for (const [name, deps] of Object.entries(results.deps))
-        for (const dep of deps) {
-          if (results.deps[dep]) {
-            // Already registered - do nothing
-          } else if (results.pending[dep]) {
-            const fn = results.pending[dep];
-            results.pending[dep] = undefined;
-            fn();
-          } else {
-            results.addError(`${name} referenced an unspecified asset: ${dep}`);
+      const loop = () => {
+        // This seems stupid, lazy way of doing it but it's been too long a day so meh
+        const changed = [false];
+        for (const [name, deps] of Object.entries(results.deps))
+          for (const dep of deps) {
+            if (results.deps[dep]) {
+              // Already registered - do nothing
+            } else if (results.pending[dep]) {
+              const fns = results.pending[dep];
+              results.pending[dep] = undefined;
+              fns.forEach(fn => fn());
+              changed[0] = true;
+            } else {
+              results.addError(`${name} referenced an unspecified asset: ${dep}`);
+            }
           }
+        return changed[0];
+      }
+      while (loop());
+    }
 
+    // Graph dependencies
+    if (results.ok()) {
+      const graph = {};
+      const add = n => {
+        if (graph[n] === undefined) {
+
+          graph[n] = null;
+          const deps = results.deps[n] || [];
+          deps.forEach(add);
+          graph[n] = {};
+          deps.forEach(d => graph[n][d] = graph[d]);
+          Object.freeze(graph[n]);
+
+        } else if (graph[n] === null) {
+          results.addError(`Circular dependency on asset: ${n}`)
         }
+      };
+      Object.keys(results.deps).forEach(add);
+      Object.freeze(graph);
+      // if (results.ok())
+      //   console.log(graph);
     }
   }
 
