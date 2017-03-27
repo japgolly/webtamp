@@ -5,7 +5,7 @@ const
   Utils = require('./utils');
 
 /** @result {name, contents :: () => string} => string */
-function mkOutputNameFn(pat0, {
+function make(pat0, {
   defaultHashAlgo = 'sha256',
   defaultHashWidth = 32
 } = {}) {
@@ -55,4 +55,4 @@ function mkOutputNameFn(pat0, {
   return i => fn(i, pat);
 }
 
-module.exports = mkOutputNameFn;
+module.exports = { make };

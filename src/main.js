@@ -1,27 +1,37 @@
 const
   FS = require('fs'),
   Glob = require("glob"),
+  OutputName = require('./outputName'),
   Path = require('path'),
   Results = require('./results'),
   Utils = require('./utils');
 
-const mkOutputNameFn = require('./outputName');
-
-function planLocal({ src, target, results }, name, value, outputNameFn) {
-  if (value.file) {
+function planLocal({ src, target, results, mkOutputNameFn }, name, value, outputNameFn0) {
+  if (!value.file)
+    results.addError(`${name} missing key: file`);
+  else {
     const fs = Glob.sync(value.file, { cwd: src, nodir: true });
     if (fs.length == 0)
       results.warns.push(`File(s) not found: ${value.file}`);
     else {
+      const outputNameFn = value.outputName ? mkOutputNameFn(value.outputName) : outputNameFn0;
+
+      // Add each local file
       for (const f of fs) {
         const srcFilename = src + '/' + f;
         const contents = Utils.memoise(() => FS.readFileSync(srcFilename));
-        const newName = outputNameFn({ name: f, contents });
+        let newName = outputNameFn({ name: f, contents });
+        if (value.outputPath)
+          newName = `${value.outputPath}/${newName}`;
+
+        // Copy file
         results.addOp({
           type: 'copy',
           from: [src, f],
           to: [target, newName],
         });
+
+        // Add to manifest
         if (value.manifest) {
           const add = n => results.addManifestEntry(n, '/' + newName);
           if (value.manifest === true) {
@@ -46,7 +56,9 @@ function plan(config) {
     results = new Results(),
     src = Path.resolve(config.src || '.'),
     target = Path.resolve(config.output.dir || 'target'),
-    ctx = { results, src, target };
+    outputNameFnDefaults = {},
+    mkOutputNameFn = f => OutputName.make(f, outputNameFnDefaults),
+    ctx = { results, src, target, mkOutputNameFn };
   if (!FS.existsSync(src))
     results.errors.push(`Src dir doesn't exist: ${src}`);
 
