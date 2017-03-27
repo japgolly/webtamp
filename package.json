@@ -1,0 +1,14 @@
+{
+  "name": "webtamp",
+  "version": "0.1.0",
+  "main": "src/main.js",
+  "author": "David Barri <japgolly@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "glob": "^7.1.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0"
+  }
+}
