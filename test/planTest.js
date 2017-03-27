@@ -149,5 +149,40 @@ describe('Plan', () => {
       });
 
     });
+
+    describe('optional', () => {
+      it('ignored when not referenced', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: {},
+          optional: { vizJs },
+        };
+        assertResults(cfg, expect => {});
+      });
+    });
+
+    describe('dependencies', () => {
+
+      [
+        ['optional', 'vizJs'],
+        ['same optional twice', ['vizJs', 'vizJs']],
+      ].map(([testName, assetValue]) => {
+        it('main → ' + testName, () => {
+          const cfg = {
+            src,
+            output: { dir: target },
+            assets: { omg: assetValue },
+            optional: { vizJs },
+          };
+          assertResults(cfg, expect => {
+            expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
+            expect.addManifestEntry('vizJs', '/viz.js');
+          });
+        });
+      });
+
+    });
+
   });
 });

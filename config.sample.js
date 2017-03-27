@@ -21,5 +21,13 @@ export default {
       type: 'external',
       path: 'whatever.js',
     },
+
+    name: "asset name",
+
+    name: [any value types used above],
+  },
+
+  optional: {
+    // same as 'assets' above
   },
 }

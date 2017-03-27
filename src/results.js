@@ -4,6 +4,8 @@ class Results {
     this.errors = [];
     this.warns = [];
     this.manifest = {};
+    this.deps = {};
+    this.pending = {};
   }
 
   addOp(o) {
@@ -19,7 +21,7 @@ class Results {
     if (this.manifest[k] && this.manifest[k] != v) {
       const o = {}
       o[k] = this.manifest[k];
-      addWarn("Overwritting manifest entry: " + JSON.stringify(o))
+      this.addWarn("Overwritting manifest entry: " + JSON.stringify(o))
     }
     this.manifest[k] = v;
   }
@@ -29,6 +31,31 @@ class Results {
     this.errors.push(r.errors);
     this.warns.push(r.warns);
     this.manifest = Object.assign(this.manifest, r.manifest);
+  }
+
+  registerTerminal(name) {
+    if (this.pending[name] || this.deps[name])
+      this.addError(`Duplicate asset: ${name}`);
+    else {
+      this.deps[name] = Object.freeze([]);
+    }
+  }
+
+  registerForLater(name, register) {
+    if (this.pending[name] || this.deps[name])
+      this.addError(`Duplicate asset: ${name}`);
+    else
+      this.pending[name] = register;
+  }
+
+  addDependency(from, to) {
+    const a = this.deps[from];
+    if (!a)
+      this.deps[from] = [to];
+    else if (Object.isFrozen(a))
+      this.addError(`Can't add dependency ${to} to terminal asset ${from}.`);
+    else if (!a.includes(to))
+      a.push(to);
   }
 
   ok() {
