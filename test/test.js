@@ -50,110 +50,110 @@ const
   src = Path.resolve(__dirname, 'data'),
   target = '/tmp/tool-thingy';
 
+const assertResults = (cfg, addExpectations) => {
+  const expect = new Results;
+  addExpectations(expect);
+  Assert.deepEqual(Main.plan(cfg), expect.toObject());
+};
+
 describe('main()', () => {
 
   it('local', () => {
-    const
-      cfg = {
-        src,
-        output: { dir: target },
-        assets: { vizJs },
-      },
-      expect = new Results;
-    expect.addOp({
-      type: 'copy',
-      from: [src, 'vendor/viz.js'],
-      to: [target, 'viz.js']
-    });
-    expect.addManifestEntry('vizJs', '/viz.js')
-    Assert.deepEqual(Main.plan(cfg), expect.toObject());
+    const cfg = {
+      src,
+      output: { dir: target },
+      assets: { vizJs },
+    };
+    assertResults(cfg, expect => {
+      expect.addOp({
+        type: 'copy',
+        from: [src, 'vendor/viz.js'],
+        to: [target, 'viz.js']
+      });
+      expect.addManifestEntry('vizJs', '/viz.js')
+    })
   });
 
   it('local, no manifest', () => {
-    const
-      cfg = {
-        src,
-        output: { dir: target },
-        assets: { vizJs: { type: 'local', file: 'vendor/v?z.js' } },
-      },
-      expect = new Results;
-    expect.addOp({
-      type: 'copy',
-      from: [src, 'vendor/viz.js'],
-      to: [target, 'viz.js']
+    const cfg = {
+      src,
+      output: { dir: target },
+      assets: { vizJs: { type: 'local', file: 'vendor/v?z.js' } },
+    };
+    assertResults(cfg, expect => {
+      expect.addOp({
+        type: 'copy',
+        from: [src, 'vendor/viz.js'],
+        to: [target, 'viz.js']
+      });
     });
-    Assert.deepEqual(Main.plan(cfg), expect.toObject());
   });
 
   it('local with hashed filename', () => {
-    const
-      cfg = {
-        src,
-        output: { dir: target, name: '[hash].[ext]' },
-        assets: { vizJs },
-      },
-      expect = new Results;
-    expect.addOp({
-      type: 'copy',
-      from: [src, 'vendor/viz.js'],
-      to: [target, 'e4e91995e194dd59cafba1c0dad576c6.js']
+    const cfg = {
+      src,
+      output: { dir: target, name: '[hash].[ext]' },
+      assets: { vizJs },
+    };
+    assertResults(cfg, expect => {
+      expect.addOp({
+        type: 'copy',
+        from: [src, 'vendor/viz.js'],
+        to: [target, 'e4e91995e194dd59cafba1c0dad576c6.js']
+      });
+      expect.addManifestEntry('vizJs', '/e4e91995e194dd59cafba1c0dad576c6.js')
     });
-    expect.addManifestEntry('vizJs', '/e4e91995e194dd59cafba1c0dad576c6.js')
-    Assert.deepEqual(Main.plan(cfg), expect.toObject());
   });
 
   it('local files with manifest fn', () => {
-    const
-      cfg = {
-        src,
-        output: { dir: target },
-        assets: { svgs },
-      },
-      expect = new Results;
-    for (const i of [1, 2]) {
-      const f = `image${i}.svg`;
-      expect.addOp({ type: 'copy', from: [src, f], to: [target, f] });
-      expect.addManifestEntry(`image${i}Svg`, '/' + f)
-    }
-    Assert.deepEqual(Main.plan(cfg), expect.toObject());
+    const cfg = {
+      src,
+      output: { dir: target },
+      assets: { svgs },
+    };
+    assertResults(cfg, expect => {
+      for (const i of [1, 2]) {
+        const f = `image${i}.svg`;
+        expect.addOp({ type: 'copy', from: [src, f], to: [target, f] });
+        expect.addManifestEntry(`image${i}Svg`, '/' + f)
+      }
+    });
   });
 
   it('local files with manifest fn and outputPath', () => {
-    const
-      cfg = {
-        src,
-        output: { dir: target },
-        assets: {
-          svgs: Object.assign({ outputPath: 'img' }, svgs)
-        },
+    const cfg = {
+      src,
+      output: { dir: target },
+      assets: {
+        svgs: Object.assign({ outputPath: 'img' }, svgs)
       },
-      expect = new Results;
-    for (const i of [1, 2]) {
-      const f = `image${i}.svg`;
-      expect.addOp({ type: 'copy', from: [src, f], to: [target, 'img/' + f] });
-      expect.addManifestEntry(`image${i}Svg`, '/img/' + f)
-    }
-    Assert.deepEqual(Main.plan(cfg), expect.toObject());
+    };
+    assertResults(cfg, expect => {
+      for (const i of [1, 2]) {
+        const f = `image${i}.svg`;
+        expect.addOp({ type: 'copy', from: [src, f], to: [target, 'img/' + f] });
+        expect.addManifestEntry(`image${i}Svg`, '/img/' + f)
+      }
+    });
   });
 
   it('local files with manifest fn and outputName', () => {
-    const
-      cfg = {
-        src,
-        output: { dir: target },
-        assets: {
-          svgs: Object.assign({ outputName: '[hash].[ext]' }, svgs)
-        },
+    const cfg = {
+      src,
+      output: { dir: target },
+      assets: {
+        svgs: Object.assign({ outputName: '[hash].[ext]' }, svgs)
       },
-      expect = new Results;
-    const hashes = ['03f43b8f2e62bd8d9c3ccb8f9d8f8b26', '88ddfd89852406e3916e28a79407d564'];
-    for (const i of [1, 2]) {
-      const fi = `image${i}.svg`;
-      const fo = `${hashes[i-1]}.svg`;
-      expect.addOp({ type: 'copy', from: [src, fi], to: [target, fo] });
-      expect.addManifestEntry(`image${i}Svg`, '/' + fo)
-    }
-    Assert.deepEqual(Main.plan(cfg), expect.toObject());
+    };
+    assertResults(cfg, expect => {
+      const hashes = ['03f43b8f2e62bd8d9c3ccb8f9d8f8b26', '88ddfd89852406e3916e28a79407d564'];
+      for (const i of [1, 2]) {
+        const fi = `image${i}.svg`;
+        const fo = `${hashes[i-1]}.svg`;
+        expect.addOp({ type: 'copy', from: [src, fi], to: [target, fo] });
+        expect.addManifestEntry(`image${i}Svg`, '/' + fo)
+      }
+    });
   });
 
 });
