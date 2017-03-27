@@ -6,23 +6,35 @@ const
   Results = require('./results'),
   Utils = require('./utils');
 
-function planLocal({ src, target, results, mkOutputNameFn }, name, value, outputNameFn0) {
-  if (!value.file)
+/**
+ * @param  {String}                            src
+ * @param  {String}                            target
+ * @param  {Results}                           results
+ * @param  {NameTemplate => OutputNameFn}      mkOutputNameFn
+ * @param  {String}                            name
+ * @param  {String}                            files
+ * @param  {NameTemplate?}                     outputName
+ * @param  {String?}                           outputPath
+ * @param  {Bool | Path => Maybe ManifestName} manifest
+ * @param  {OutputNameFn}                      outputNameFn0
+ */
+function planLocal({ src, target, results, mkOutputNameFn }, name, { files, outputName, outputPath, manifest }, outputNameFn0) {
+  if (!files)
     results.addError(`${name} missing key: file`);
   else {
-    const fs = Glob.sync(value.file, { cwd: src, nodir: true });
+    const fs = Glob.sync(files, { cwd: src, nodir: true });
     if (fs.length == 0)
-      results.warns.push(`File(s) not found: ${value.file}`);
+      results.warns.push(`File(s) not found: ${value[File]}`);
     else {
-      const outputNameFn = value.outputName ? mkOutputNameFn(value.outputName) : outputNameFn0;
+      const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
 
       // Add each local file
       for (const f of fs) {
         const srcFilename = src + '/' + f;
         const contents = Utils.memoise(() => FS.readFileSync(srcFilename));
         let newName = outputNameFn({ name: f, contents });
-        if (value.outputPath)
-          newName = `${value.outputPath}/${newName}`;
+        if (outputPath)
+          newName = `${outputPath}/${newName}`;
 
         // Copy file
         results.addOp({
@@ -32,15 +44,15 @@ function planLocal({ src, target, results, mkOutputNameFn }, name, value, output
         });
 
         // Add to manifest
-        if (value.manifest) {
+        if (manifest) {
           const add = n => results.addManifestEntry(n, '/' + newName);
-          if (value.manifest === true) {
+          if (manifest === true) {
             if (fs.length == 1)
               add(name);
             else
-              results.addWarn(`${name} has manifest: true but '${value.file}' matches more than 1 file.`);
+              results.addWarn(`${name} has manifest: true but '${files}' matches more than 1 file.`);
           } else {
-            const manifestName = value.manifest(f);
+            const manifestName = manifest(f);
             if (manifestName)
               add(manifestName);
           }
@@ -50,12 +62,13 @@ function planLocal({ src, target, results, mkOutputNameFn }, name, value, output
   }
 }
 
-function planExternal({ src, target, results, mkOutputNameFn }, name, value) {
-  if (!value.path)
+function planExternal({ src, target, results, mkOutputNameFn }, name, { path, manifest }) {
+  if (!path)
     results.addError(`${name} missing key: path`);
-  else {
-    results.addManifestEntry(name, value.path.replace(/^\/?/, '/'));
-  }
+  else if (typeof(manifest) !== 'undefined')
+    results.addError(`${name} is of type 'external' but contains a manifest key: ${JSON.stringify(manifest)}`);
+  else
+    results.addManifestEntry(name, path.replace(/^\/?/, '/'));
 }
 
 function run(config) {
