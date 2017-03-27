@@ -156,4 +156,19 @@ describe('main()', () => {
     });
   });
 
+  it('external', () => {
+    const cfg = {
+      src,
+      output: { dir: target },
+      assets: {
+        extA: { type: 'external', path: 'a.js' },
+        extB: { type: 'external', path: '/b.js' },
+      },
+    };
+    assertResults(cfg, expect => {
+      expect.addManifestEntry("extA", '/a.js');
+      expect.addManifestEntry("extB", '/b.js');
+    });
+  });
+
 });

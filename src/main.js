@@ -50,6 +50,14 @@ function planLocal({ src, target, results, mkOutputNameFn }, name, value, output
   }
 }
 
+function planExternal({ src, target, results, mkOutputNameFn }, name, value) {
+  if (!value.path)
+    results.addError(`${name} missing key: path`);
+  else {
+    results.addManifestEntry(name, value.path.replace(/^\/?/, '/'));
+  }
+}
+
 function plan(config) {
   config.output = config.output || {};
   const
@@ -69,6 +77,12 @@ function plan(config) {
       switch (value.type) {
         case 'local':
           planLocal(ctx, name, value, outputNameFn);
+          break;
+        case 'external':
+          planExternal(ctx, name, value);
+          break;
+        default:
+          results.addError(`${name} has invalid asset type: ${JSON.stringify(value.type)}`);
           break;
       }
 
