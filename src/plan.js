@@ -71,15 +71,24 @@ const planLocal =
   }
 
 const planExternal =
-  ({ src, target, results, mkOutputNameFn }) =>
+  ({ src, target, results, mkOutputNameFn }) => inArray =>
   (name, { path, manifest }) => {
-    if (!path)
-      results.addError(`${name} missing key: path`);
-    else if (typeof(manifest) !== 'undefined')
-      results.addError(`${name} is of type 'external' but contains a manifest key: ${JSON.stringify(manifest)}`);
-    else {
+    const add = name => {
       results.registerNow(name);
       results.addManifestEntry(name, path.replace(/^\/?/, '/'));
+    };
+    if (!path)
+      results.addError(`${name} missing key: path`);
+    else {
+      const desc = inArray ? `${name}:${path}` : name;
+      if (typeof manifest === 'string')
+        add(manifest);
+      else if (typeof manifest !== 'undefined')
+        results.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifest)}`);
+      else if (inArray)
+        results.addError(`${desc} requires an explicit manifest name because it's in an array.`);
+      else
+        add(name);
     }
   }
 
@@ -130,7 +139,7 @@ function run(config) {
     const cases = {
       string: _ => planRef(ctx),
       local: planLocal(ctx, outputNameFn),
-      external: _ => planExternal(ctx),
+      external: planExternal(ctx),
     }
 
     // Parse config.optional

@@ -20,6 +20,7 @@ export default {
     name: {
       type: 'external',
       path: 'whatever.js',
+      // manifest: undefined, // String
     },
 
     name: "asset name",

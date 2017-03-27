@@ -154,7 +154,7 @@ describe('Plan', () => {
     });
 
     describe('external', () => {
-      it('simple', () => {
+      it('manifest name from asset name', () => {
         const cfg = {
           src,
           output: { dir: target },
@@ -169,14 +169,52 @@ describe('Plan', () => {
         });
       });
 
-      it('errors if manifest setting provided', () => {
+      it('explicit manifest names', () => {
         const cfg = {
           src,
           output: { dir: target },
-          assets: { extA: { type: 'external', path: 'a.js', manifest: false } },
+          assets: {
+            exts: [
+              { type: 'external', path: 'a.js', manifest: 'extA' },
+              { type: 'external', path: 'b.js', manifest: 'extB' },
+            ],
+          },
         };
         assertResults(cfg, expect => {
-          expect.addError("extA is of type 'external' but contains a manifest key: false")
+          expect.addManifestEntry("extA", '/a.js');
+          expect.addManifestEntry("extB", '/b.js');
+        });
+      });
+
+      it('manifest names required', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: {
+            exts: [
+              { type: 'external', path: 'a.js' },
+              { type: 'external', path: 'b.js' },
+            ],
+          },
+        };
+        assertResults(cfg, expect => {
+          expect.addError("exts:a.js requires an explicit manifest name because it's in an array.");
+          expect.addError("exts:b.js requires an explicit manifest name because it's in an array.");
+        });
+      });
+
+      it('error if manifest setting not a string', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: {
+            extA: { type: 'external', path: 'a.js', manifest: false },
+            extB: { type: 'external', path: 'b.js', manifest: f => f },
+          },
+        };
+        assertResults(cfg, expect => {
+          expect.addError("extA has an invalid manifest: false");
+          expect.addError("extB has an invalid manifest: undefined");
         });
       });
 
@@ -253,7 +291,7 @@ describe('Plan', () => {
             d: [vizJsExplicit, 'e'],
             e: 'f',
             f: { type: 'external', path: 'f' },
-            n: [{ type: 'external', path: 'n' }]
+            n: [{ type: 'external', path: 'n', manifest: 'n' }]
           },
         };
         assertResults(cfg, expect => {
@@ -261,13 +299,11 @@ describe('Plan', () => {
           expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
           expect.addManifestEntry('vizJs', '/viz.js');
           expect.addManifestEntry('f', '/f');
-          expect.addManifestEntry('m', '/m');
           expect.addManifestEntry('n', '/n');
         });
       });
     });
 
-    // TODO externals can't be used in arrays
     // TODO rename results => state
 
   });
