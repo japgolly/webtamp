@@ -6,7 +6,9 @@ const
 
 const mkOutputNameFn = require('../src/outputName');
 
-const vizJs = { type: 'local', file: 'vendor/v?z.js' };
+const vizJs = { type: 'local', file: 'vendor/v?z.js', manifest: true };
+const reactJs1 = { type: 'local', file: 'react1.js' };
+const reactJs2 = { type: 'local', file: 'react2.js' };
 
 describe('mkOutputNameFn', () => {
   const i = { name: 'y/hi.txt', contents: () => "12345678" }
@@ -44,12 +46,14 @@ describe('mkOutputNameFn', () => {
   })
 });
 
+const
+  src = Path.resolve(__dirname, 'data'),
+  target = '/tmp/tool-thingy';
+
 describe('main()', () => {
 
-  it('local, file', () => {
+  it('local', () => {
     const
-      src = Path.resolve(__dirname, 'data'),
-      target = '/tmp/tool-thingy',
       cfg = {
         src,
         output: { dir: target },
@@ -61,13 +65,28 @@ describe('main()', () => {
       from: [src, 'vendor/viz.js'],
       to: [target, 'viz.js']
     });
+    expect.addManifestEntry('vizJs', '/viz.js')
     Assert.deepEqual(Main.plan(cfg), expect.toObject());
   });
 
-  it('local, file, hash filename', () => {
+  it('local, no manifest', () => {
     const
-      src = Path.resolve(__dirname, 'data'),
-      target = '/tmp/tool-thingy',
+      cfg = {
+        src,
+        output: { dir: target },
+        assets: { vizJs: { type: 'local', file: 'vendor/v?z.js' } },
+      },
+      expect = new Results;
+    expect.addOp({
+      type: 'copy',
+      from: [src, 'vendor/viz.js'],
+      to: [target, 'viz.js']
+    });
+    Assert.deepEqual(Main.plan(cfg), expect.toObject());
+  });
+
+  it('local with hashed filename', () => {
+    const
       cfg = {
         src,
         output: { dir: target, name: '[hash].[ext]' },
@@ -79,6 +98,26 @@ describe('main()', () => {
       from: [src, 'vendor/viz.js'],
       to: [target, 'e4e91995e194dd59cafba1c0dad576c6.js']
     });
+    expect.addManifestEntry('vizJs', '/e4e91995e194dd59cafba1c0dad576c6.js')
     Assert.deepEqual(Main.plan(cfg), expect.toObject());
   });
+
+  it('local files with manifest fn', () => {
+    const
+      cfg = {
+        src,
+        output: { dir: target },
+        assets: {
+          svgs: { type: 'local', file: '*.svg', manifest: f => f.replace(/\.svg$/, 'Svg') }
+        },
+      },
+      expect = new Results;
+    for(const i of [1, 2]) {
+      const f = `image${i}.svg`;
+      expect.addOp({ type: 'copy', from: [src, f], to: [target, f] });
+      expect.addManifestEntry(`image${i}Svg`, '/' + f)
+    }
+    Assert.deepEqual(Main.plan(cfg), expect.toObject());
+  });
+
 });

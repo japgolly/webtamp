@@ -3,6 +3,7 @@ class Results {
     this.ops = [];
     this.errors = [];
     this.warns = [];
+    this.manifest = {};
   }
 
   addOp(o) {
@@ -14,11 +15,20 @@ class Results {
   addWarn(o) {
     this.warns.push(o)
   }
+  addManifestEntry(k, v) {
+    if (this.manifest[k] && this.manifest[k] != v) {
+      const o = {}
+      o[k] = this.manifest[k];
+      addWarn("Overwritting manifest entry: " + JSON.stringify(o))
+    }
+    this.manifest[k] = v;
+  }
   addResults(r) {
     if (r.toObject) r = r.toObject;
-    this.ops.push(r.ops)
-    this.errors.push(r.errors)
-    this.warns.push(r.warns)
+    this.ops.push(r.ops);
+    this.errors.push(r.errors);
+    this.warns.push(r.warns);
+    this.manifest = Object.assign(this.manifest, r.manifest);
   }
 
   ok() {
@@ -29,7 +39,8 @@ class Results {
     return {
       ops: this.ops,
       errors: this.errors,
-      warns: this.warns
+      warns: this.warns,
+      manifest: this.manifest,
     };
   }
 }
