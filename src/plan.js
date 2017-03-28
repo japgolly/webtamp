@@ -21,76 +21,120 @@ const
  */
 const planLocal =
   ({ src, target, state, mkOutputNameFn }, outputNameFn0) => inArray =>
-  (name, { files, outputName, outputPath, manifest }) => {
+  (name, { files, outputName, outputPath, manifest }) =>
+  state.checkThenRunIfNoErrors(() => {
     if (!files)
-      state.addError(`${name} missing key: file`);
-    else if (manifest === true && inArray)
+      state.addError(`${name} missing key: files`);
+    if (manifest === true && inArray)
       state.addError(`${name} has {manifest: true} but requires an explicit name or function.`);
+  }, () => {
+    const fs = Glob.sync(files, { cwd: src, nodir: true }).sort();
+    if (fs.length == 0)
+      state.addWarn(`${name} file(s) not found: ${files}`);
     else {
-      const fs = Glob.sync(files, { cwd: src, nodir: true });
-      if (fs.length == 0)
-        state.addWarn(`File(s) not found: ${value[File]}`);
-      else {
-        const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
-        state.registerNow(name);
+      const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
+      state.registerNow(name);
 
-        // Add each local file
-        for (const f of fs) {
-          const srcFilename = src + '/' + f;
-          const contents = Utils.memoise(() => FS.readFileSync(srcFilename));
-          let newName = outputNameFn({ name: f, contents });
-          if (outputPath)
-            newName = `${outputPath}/${newName}`;
+      // Add each local file
+      for (const f of fs) {
+        const srcFilename = Path.resolve(src, f);
+        const contents = Utils.memoise(() => FS.readFileSync(srcFilename));
+        let newName = outputNameFn({ name: f, contents });
+        if (outputPath)
+          newName = `${outputPath}/${newName}`;
 
-          // Copy file
-          state.addOp({
-            type: 'copy',
-            from: [src, f],
-            to: [target, newName],
-          });
+        // Copy file
+        state.addOp({
+          type: 'copy',
+          from: [src, f],
+          to: [target, newName],
+        });
 
-          // Add to manifest
-          if (manifest) {
-            const add = n => state.addManifestEntry(n, '/' + newName);
-            if (manifest === true) {
-              if (fs.length > 1)
-                state.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
-              else
-                add(name);
-            } else if (typeof manifest === 'string')
-              add(manifest);
-            else {
-              const manifestName = manifest(f);
-              if (manifestName)
-                add(manifestName);
-            }
+        // Add to manifest
+        if (manifest) {
+          const add = n => state.addManifestEntryLocal(n, '/' + newName);
+          if (manifest === true) {
+            if (fs.length > 1)
+              state.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
+            else
+              add(name);
+          } else if (typeof manifest === 'string')
+            add(manifest);
+          else {
+            const manifestName = manifest(f);
+            if (manifestName)
+              add(manifestName);
           }
         }
       }
     }
-  }
+  });
+
+const planCdn =
+  ({ src, state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity }) =>
+  state.checkThenRunIfNoErrors(() => {
+    if (!url)
+      state.addError(`${name} missing key: url`);
+    if (!integrity)
+      state.addError(`${name} missing key: integrity`);
+  }, () => {
+    const desc = name;
+    let i; // Option[ValidIntegrityAttribute]
+
+    if (typeof integrity === 'string')
+      i = integrity;
+
+    // integrity: { files: 'image2.svg', algo: 'sha384' }
+    else if (typeof integrity === 'object') {
+      const algos = Utils.asArray(integrity.algo || defaultAlgos);
+      const { files } = integrity;
+      if (files) {
+        const fs = Glob.sync(files, { cwd: src, nodir: true }).sort();
+        if (fs.length == 0)
+          state.addError(`${desc} integrity file(s) not found: ${files}`);
+        else
+          state.checkThenRunIfNoErrors(() => {
+            const hashes = [];
+            for (const algo of algos) {
+              const hasher = Utils.hashData(algo, 'base64');
+              for (const f of fs) {
+                const h = hasher(FS.readFileSync(Path.resolve(src, f)));
+                hashes.push(`${algo}-${h}`);
+              }
+            }
+            return hashes;
+          }, hashes => {
+            i = hashes.join(' ')
+          });
+      } else
+        state.addError(`${desc} integrity missing key: files`);
+
+    } else
+      state.addError(`${desc} has an invalid integrity value: ${JSON.stringify(integrity)}`);
+    if (i)
+      state.addManifestEntryCdn(name, { url, integrity: i });
+  })
 
 const planExternal =
-  ({ src, target, state, mkOutputNameFn }) => inArray =>
-  (name, { path, manifest }) => {
-    const add = name => {
-      state.registerNow(name);
-      state.addManifestEntry(name, path.replace(/^\/?/, '/'));
-    };
+  ({ state }) => inArray => (name, { path, manifest }) =>
+  state.checkThenRunIfNoErrors(() => {
     if (!path)
       state.addError(`${name} missing key: path`);
-    else {
-      const desc = inArray ? `${name}:${path}` : name;
-      if (typeof manifest === 'string')
-        add(manifest);
-      else if (typeof manifest !== 'undefined')
-        state.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifest)}`);
-      else if (inArray)
-        state.addError(`${desc} requires an explicit manifest name because it's in an array.`);
-      else
-        add(name);
-    }
-  }
+  }, () => {
+    const add = name => {
+      state.registerNow(name);
+      state.addManifestEntryLocal(name, path.replace(/^\/?/, '/'));
+    };
+    const desc = inArray ? `${name}:${path}` : name;
+    if (typeof manifest === 'string')
+      add(manifest);
+    else if (typeof manifest !== 'undefined')
+      state.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifest)}`);
+    else if (inArray)
+      state.addError(`${desc} requires an explicit manifest name because it's in an array.`);
+    else
+      add(name);
+  })
 
 const planRef = ({ state }) => (name, refName) => {
   state.addDependency(name, refName);
@@ -109,6 +153,8 @@ const foldAsset = (state, cases) => {
           return cases.local(inArray)(name, value);
         case 'external':
           return cases.external(inArray)(name, value);
+        case 'cdn':
+          return cases.cdn(inArray)(name, value);
         default:
           state.addError(`${name} has invalid asset type: ${JSON.stringify(value.type)}`);
       }
@@ -140,6 +186,7 @@ function run(config) {
       string: _ => planRef(ctx),
       local: planLocal(ctx, outputNameFn),
       external: planExternal(ctx),
+      cdn: planCdn(ctx),
     }
 
     // Parse config.optional

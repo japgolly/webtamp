@@ -5,10 +5,15 @@ const
   Plan = require('../src/plan'),
   State = require('../src/state');
 
+// cat test/data/image1.svg | openssl dgst -sha256 -binary | openssl base64 -A
+
 const
   vizJs = { type: 'local', files: 'vendor/v?z.js', manifest: true },
   vizJsExplicit = { type: 'local', files: 'vendor/v?z.js', manifest: 'vizJs' },
   svgs = { type: 'local', files: '*.svg', manifest: f => f.replace(/\.svg$/, 'Svg') },
+  image1SvgSha256 = 'sha256-A/Q7jy5ivY2cPMuPnY+LJpxE7xyEJhPi5UchebJAaVA=',
+  image2SvgSha256 = 'sha256-iN39iYUkBuORbiinlAfVZAPIrV558O7KzRSzSP0aZng=',
+  image2SvgSha384 = 'sha384-MY1+aNx3EQM6G5atTiVuZcv6x2a+erMjYoaEH7WPHA6CpuihomIrPuqDHpL48fWI',
   src = Path.resolve(__dirname, 'data'),
   target = '/tmp/tool-thingy';
 
@@ -16,7 +21,7 @@ function addSvgExpectations(expect) {
   for (const i of [1, 2]) {
     const f = `image${i}.svg`;
     expect.addOp({ type: 'copy', from: [src, f], to: [target, f] });
-    expect.addManifestEntry(`image${i}Svg`, '/' + f)
+    expect.addManifestEntryLocal(`image${i}Svg`, '/' + f)
   }
 }
 
@@ -33,6 +38,7 @@ describe('Plan', () => {
       const e = norm(expect.results());
       const a = norm(Plan.run(cfg));
       Assert.deepEqual(a, e);
+      return a;
     };
 
     describe('local', () => {
@@ -49,7 +55,7 @@ describe('Plan', () => {
             from: [src, 'vendor/viz.js'],
             to: [target, 'viz.js']
           });
-          expect.addManifestEntry('vizJs', '/viz.js')
+          expect.addManifestEntryLocal('vizJs', '/viz.js')
         })
       });
 
@@ -80,7 +86,7 @@ describe('Plan', () => {
             from: [src, 'vendor/viz.js'],
             to: [target, 'viz.js']
           });
-          expect.addManifestEntry('omgJs', '/viz.js')
+          expect.addManifestEntryLocal('omgJs', '/viz.js')
         });
       });
 
@@ -107,7 +113,7 @@ describe('Plan', () => {
             from: [src, 'vendor/viz.js'],
             to: [target, 'e4e91995e194dd59cafba1c0dad576c6.js']
           });
-          expect.addManifestEntry('vizJs', '/e4e91995e194dd59cafba1c0dad576c6.js')
+          expect.addManifestEntryLocal('vizJs', '/e4e91995e194dd59cafba1c0dad576c6.js')
         });
       });
 
@@ -134,7 +140,7 @@ describe('Plan', () => {
           for (const i of [1, 2]) {
             const f = `image${i}.svg`;
             expect.addOp({ type: 'copy', from: [src, f], to: [target, 'img/' + f] });
-            expect.addManifestEntry(`image${i}Svg`, '/img/' + f)
+            expect.addManifestEntryLocal(`image${i}Svg`, '/img/' + f)
           }
         });
       });
@@ -153,7 +159,7 @@ describe('Plan', () => {
             const fi = `image${i}.svg`;
             const fo = `${hashes[i-1]}.svg`;
             expect.addOp({ type: 'copy', from: [src, fi], to: [target, fo] });
-            expect.addManifestEntry(`image${i}Svg`, '/' + fo)
+            expect.addManifestEntryLocal(`image${i}Svg`, '/' + fo)
           }
         });
       });
@@ -170,8 +176,8 @@ describe('Plan', () => {
           },
         };
         assertState(cfg, expect => {
-          expect.addManifestEntry("extA", '/a.js');
-          expect.addManifestEntry("extB", '/b.js');
+          expect.addManifestEntryLocal("extA", '/a.js');
+          expect.addManifestEntryLocal("extB", '/b.js');
         });
       });
 
@@ -187,8 +193,8 @@ describe('Plan', () => {
           },
         };
         assertState(cfg, expect => {
-          expect.addManifestEntry("extA", '/a.js');
-          expect.addManifestEntry("extB", '/b.js');
+          expect.addManifestEntryLocal("extA", '/a.js');
+          expect.addManifestEntryLocal("extB", '/b.js');
         });
       });
 
@@ -253,7 +259,7 @@ describe('Plan', () => {
           };
           assertState(cfg, expect => {
             expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
-            expect.addManifestEntry('vizJs', '/viz.js');
+            expect.addManifestEntryLocal('vizJs', '/viz.js');
           });
         });
       });
@@ -281,6 +287,61 @@ describe('Plan', () => {
       });
     });
 
+    describe('cdn', () => {
+      const url = 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js';
+
+      const test = (def, expectFn) => {
+        const cfg = { src, output: { dir: target }, assets: { x: Object.assign({ type: 'cdn' }, def) } };
+        assertState(cfg, expectFn);
+      };
+
+      const testOk = (def, out) => test(def, expect => expect.addManifestEntryCdn('x', out));
+      const testErr = (def, err) => test(def, expect => expect.addError(err));
+
+      it('integrity specified', () => {
+        const integrity = 'sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT4‌​4=';
+        testOk({ url, integrity }, { url, integrity });
+      });
+
+      it('integrity from file', () => {
+        testOk( //
+          { url, integrity: { files: 'image2.svg' } }, //
+          { url, integrity: image2SvgSha256 });
+      });
+
+      it('integrity from multiple files', () => {
+        testOk( //
+          { url, integrity: { files: 'image?.svg' } }, //
+          { url, integrity: `${image1SvgSha256} ${image2SvgSha256}` });
+      });
+
+      it('integrity with different algorithm', () => {
+        testOk( //
+          { url, integrity: { files: 'image2.svg', algo: 'sha384' } }, //
+          { url, integrity: image2SvgSha384 });
+      });
+
+      it('integrity with multiple algorithms', () => {
+        testOk( //
+          { url, integrity: { files: 'image2.svg', algo: ['sha384', 'sha256'] } }, //
+          { url, integrity: `${image2SvgSha384} ${image2SvgSha256}` });
+      });
+
+      it('error when no integrity', () => {
+        testErr({ url }, 'x missing key: integrity');
+      });
+
+      it('error when no url', () => {
+        testErr({ integrity: image2SvgSha256 }, 'x missing key: url');
+      });
+
+      it('error when no files match', () => {
+        testErr( //
+          { url, integrity: { files: 'whatever.js' } }, //
+          'x integrity file(s) not found: whatever.js');
+      });
+    });
+
     describe('multi-feature', () => {
       it('example #1', () => {
         const cfg = {
@@ -303,10 +364,11 @@ describe('Plan', () => {
         assertState(cfg, expect => {
           addSvgExpectations(expect);
           expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
-          expect.addManifestEntry('vizJs', '/viz.js');
-          expect.addManifestEntry('f', '/f');
-          expect.addManifestEntry('n', '/n');
+          expect.addManifestEntryLocal('vizJs', '/viz.js');
+          expect.addManifestEntryLocal('f', '/f');
+          expect.addManifestEntryLocal('n', '/n');
         });
+        // console.log(Plan.run(cfg));
       });
     });
 

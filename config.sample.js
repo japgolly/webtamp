@@ -11,7 +11,7 @@ export default {
 
     name: {
       type: 'local',
-      file: 'images/**/*.{png,jpg}',
+      files: 'images/**/*.{png,jpg}',
       // manifest: false,       // Bool | Path => Maybe ManifestName
       // outputPath: undefined, // String
       // outputName: undefined, // NameTemplate
@@ -20,6 +20,18 @@ export default {
     name: {
       type: 'external',
       path: 'whatever.js',
+      // manifest: undefined, // String
+    },
+
+    name: {
+      type: 'cdn',
+      url: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js',
+      // integrity: 'sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=',
+      // integrity: {
+      //   files: 'node_modules/jquery/dist/jquery.min.js', // Pattern | Array Pattern
+      //   algo: 'sha256', // String | Array String
+      // },
+      // crossorigin: "anonymous",
       // manifest: undefined, // String
     },
 

@@ -18,13 +18,28 @@ class State {
     this.warns.push(o)
   }
 
+  checkThenRunIfNoErrors(check, run) {
+    const errCount = this.errors.length;
+    const a = check();
+    if (this.errors.length === errCount)
+      run(a);
+  }
+
   addManifestEntry(k, v) {
-    if (this.manifest[k] && this.manifest[k] != v) {
+    if (this.manifest[k] && this.manifest[k] !== v) {
       const o = {}
       o[k] = this.manifest[k];
       this.addWarn("Overwritting manifest entry: " + JSON.stringify(o))
     }
     this.manifest[k] = v;
+  }
+
+  addManifestEntryLocal(name, local) {
+    this.addManifestEntry(name, { local })
+  }
+
+  addManifestEntryCdn(name, cdn) {
+    this.addManifestEntry(name, { cdn })
   }
 
   registerNow(name) {

@@ -1,5 +1,4 @@
 const
-  Crypto = require('crypto'),
   FS = require('fs'),
   Path = require('path'),
   Utils = require('./utils');
@@ -25,14 +24,11 @@ function make(pat0, {
   }
 
   const addHash = (token, algo) => {
+    const hasher = Utils.hashData(algo || token, 'hex');
     const regex = new RegExp(`\\[${token}(?::(\\d+))?\\]`, "g")
     if (regex.test(pat))
       add((i, n) => {
-        const hash = Utils.memoise(() => {
-          const h = Crypto.createHash(algo || token);
-          h.update(i.contents());
-          return h.digest('hex');
-        })
+        const hash = Utils.memoise(() => hasher(i.contents()));
         const replace = (_, width) => width ? hash().substr(0, width) : hash();
         return n.replace(regex, replace);
       })
