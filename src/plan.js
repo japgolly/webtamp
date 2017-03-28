@@ -43,6 +43,7 @@ const planLocal =
           let newName = outputNameFn({ name: f, contents });
           if (outputPath)
             newName = `${outputPath}/${newName}`;
+          newName = newName.replace(/^\.\//g, '');
 
           // Copy file
           state.addOp({

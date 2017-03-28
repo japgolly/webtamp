@@ -123,8 +123,8 @@ class State {
   results() {
     return {
       ops: this.ops,
-      errors: this.errors,
-      warns: this.warns,
+      errors: this.errors.sort(),
+      warns: this.warns.sort(),
       manifest: this.manifest,
       graph: this.graph,
     };
