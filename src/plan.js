@@ -6,6 +6,30 @@ const
   State = require('./state'),
   Utils = require('./utils');
 
+const foldAsset = (state, cases) => {
+  const go = inArray => (name, value) => {
+    if (Array.isArray(value)) {
+      const g = go(true);
+      value.forEach(v => g(name, v));
+    } else if (typeof value === 'string')
+      cases.string(inArray)(name, value);
+    else if (typeof value === 'object')
+      switch (value.type) {
+        case 'local':
+          return cases.local(inArray)(name, value);
+        case 'external':
+          return cases.external(inArray)(name, value);
+        case 'cdn':
+          return cases.cdn(inArray)(name, value);
+        default:
+          state.addError(`${name} has invalid asset type: ${JSON.stringify(value.type)}`);
+      }
+    else
+      state.addError(`${name} has an invalid value: ${JSON.stringify(value)}`);
+  };
+  return go(false);
+}
+
 /**
  * @param  {String}                            src
  * @param  {String}                            target
@@ -148,30 +172,6 @@ const planExternal =
 
 const planRef = ({ state }) => (name, refName) => {
   state.addDependency(name, refName);
-}
-
-const foldAsset = (state, cases) => {
-  const go = inArray => (name, value) => {
-    if (Array.isArray(value)) {
-      const g = go(true);
-      value.forEach(v => g(name, v));
-    } else if (typeof value === 'string')
-      cases.string(inArray)(name, value);
-    else if (typeof value === 'object')
-      switch (value.type) {
-        case 'local':
-          return cases.local(inArray)(name, value);
-        case 'external':
-          return cases.external(inArray)(name, value);
-        case 'cdn':
-          return cases.cdn(inArray)(name, value);
-        default:
-          state.addError(`${name} has invalid asset type: ${JSON.stringify(value.type)}`);
-      }
-    else
-      state.addError(`${name} has an invalid value: ${JSON.stringify(value)}`);
-  };
-  return go(false);
 }
 
 function run(config) {
