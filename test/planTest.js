@@ -32,11 +32,12 @@ describe('Plan', () => {
     function assertState(cfg, addExpectations) {
       const expect = new State;
       addExpectations(expect);
-      const norm = o => {
+      const norm = s => {
+        const o = s.results()
         o.graph = undefined;
         return o;
       }
-      const e = norm(expect.results());
+      const e = norm(expect);
       const a = norm(Plan.run(cfg));
       Assert.deepEqual(a, e);
       return a;

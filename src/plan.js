@@ -225,7 +225,7 @@ function run(config) {
     state.graphDependencies();
   }
 
-  return state.results();
+  return state;
 };
 
 module.exports = {
