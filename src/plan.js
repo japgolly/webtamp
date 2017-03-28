@@ -71,7 +71,7 @@ const planLocal =
   });
 
 const planCdn =
-  ({ src, state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity }) =>
+  ({ src, state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity, manifest }) =>
   state.checkThenRunIfNoErrors(() => {
     if (!url)
       state.addError(`${name} missing key: url`);
@@ -112,8 +112,21 @@ const planCdn =
     } else
       state.addError(`${desc} has an invalid integrity value: ${JSON.stringify(integrity)}`);
     if (i)
-      state.addManifestEntryCdn(name, { url, integrity: i });
+      arityAwareManifestName(state, url, inArray, name, manifest,
+        n => state.addManifestEntryCdn(n, { url, integrity: i }));
   })
+
+const arityAwareManifestName = (state, subname, inArray, name, manifest, use) => {
+  const desc = inArray ? `${name}:${subname}` : name;
+  if (typeof manifest === 'string')
+    use(manifest);
+  else if (typeof manifest !== 'undefined')
+    state.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifest)}`);
+  else if (inArray)
+    state.addError(`${desc} requires an explicit manifest name because it's in an array.`);
+  else
+    use(name);
+}
 
 const planExternal =
   ({ state }) => inArray => (name, { path, manifest }) =>
@@ -125,15 +138,7 @@ const planExternal =
       state.registerNow(name);
       state.addManifestEntryLocal(name, path.replace(/^\/?/, '/'));
     };
-    const desc = inArray ? `${name}:${path}` : name;
-    if (typeof manifest === 'string')
-      add(manifest);
-    else if (typeof manifest !== 'undefined')
-      state.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifest)}`);
-    else if (inArray)
-      state.addError(`${desc} requires an explicit manifest name because it's in an array.`);
-    else
-      add(name);
+    arityAwareManifestName(state, path, inArray, name, manifest, add);
   })
 
 const planRef = ({ state }) => (name, refName) => {

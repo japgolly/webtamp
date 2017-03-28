@@ -165,19 +165,19 @@ describe('Plan', () => {
       });
     });
 
-    describe('external', () => {
+    function testManifestRequiredInArray(valueA, valueB, subname, okA, okB) {
+      Object.freeze(valueA);
+      Object.freeze(valueB);
+
       it('manifest name from asset name', () => {
         const cfg = {
           src,
           output: { dir: target },
-          assets: {
-            extA: { type: 'external', path: 'a.js' },
-            extB: { type: 'external', path: '/b.js' },
-          },
+          assets: { extA: valueA, extB: valueB },
         };
         assertState(cfg, expect => {
-          expect.addManifestEntryLocal("extA", '/a.js');
-          expect.addManifestEntryLocal("extB", '/b.js');
+          okA(expect, "extA");
+          okB(expect, "extB");
         });
       });
 
@@ -187,14 +187,14 @@ describe('Plan', () => {
           output: { dir: target },
           assets: {
             exts: [
-              { type: 'external', path: 'a.js', manifest: 'extA' },
-              { type: 'external', path: 'b.js', manifest: 'extB' },
+              Object.assign({ manifest: 'extA' }, valueA),
+              Object.assign({ manifest: 'extB' }, valueB),
             ],
           },
         };
         assertState(cfg, expect => {
-          expect.addManifestEntryLocal("extA", '/a.js');
-          expect.addManifestEntryLocal("extB", '/b.js');
+          okA(expect, "extA");
+          okB(expect, "extB");
         });
       });
 
@@ -202,16 +202,11 @@ describe('Plan', () => {
         const cfg = {
           src,
           output: { dir: target },
-          assets: {
-            exts: [
-              { type: 'external', path: 'a.js' },
-              { type: 'external', path: 'b.js' },
-            ],
-          },
+          assets: { exts: [valueA, valueB] },
         };
         assertState(cfg, expect => {
-          expect.addError("exts:a.js requires an explicit manifest name because it's in an array.");
-          expect.addError("exts:b.js requires an explicit manifest name because it's in an array.");
+          expect.addError(`exts:${subname(valueA)} requires an explicit manifest name because it's in an array.`);
+          expect.addError(`exts:${subname(valueB)} requires an explicit manifest name because it's in an array.`);
         });
       });
 
@@ -220,8 +215,8 @@ describe('Plan', () => {
           src,
           output: { dir: target },
           assets: {
-            extA: { type: 'external', path: 'a.js', manifest: false },
-            extB: { type: 'external', path: 'b.js', manifest: f => f },
+            extA: Object.assign({ manifest: false }, valueA),
+            extB: Object.assign({ manifest: f => f }, valueB),
           },
         };
         assertState(cfg, expect => {
@@ -229,7 +224,14 @@ describe('Plan', () => {
           expect.addError("extB has an invalid manifest: undefined");
         });
       });
+    };
 
+    describe('external', () => {
+      const a = { type: 'external', path: 'a.js' };
+      const b = { type: 'external', path: '/b.js' };
+      const okA = (expect, name) => expect.addManifestEntryLocal(name, '/a.js');
+      const okB = (expect, name) => expect.addManifestEntryLocal(name, '/b.js');
+      testManifestRequiredInArray(a, b, i => i.path, okA, okB);
     });
 
     describe('optional', () => {
@@ -340,6 +342,13 @@ describe('Plan', () => {
           { url, integrity: { files: 'whatever.js' } }, //
           'x integrity file(s) not found: whatever.js');
       });
+
+      const url2 = 'https://unpkg.com/react@15.3.1/dist/react.min.js';
+      const a = { type: 'cdn', url: url, integrity: image1SvgSha256 };
+      const b = { type: 'cdn', url: url2, integrity: image2SvgSha256 };
+      const okA = (expect, name) => expect.addManifestEntryCdn(name, { url: url, integrity: image1SvgSha256 });
+      const okB = (expect, name) => expect.addManifestEntryCdn(name, { url: url2, integrity: image2SvgSha256 });
+      testManifestRequiredInArray(a, b, i => i.url, okA, okB);
     });
 
     describe('multi-feature', () => {
