@@ -59,6 +59,22 @@ describe('Plan', () => {
         })
       });
 
+      it('with src', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: { vizJs: { type: 'local', src: 'vendor', files: 'v?z.js', manifest: true } },
+        };
+        assertState(cfg, expect => {
+          expect.addOp({
+            type: 'copy',
+            from: [src + '/vendor', 'viz.js'],
+            to: [target, 'viz.js']
+          });
+          expect.addManifestEntryLocal('vizJs', '/viz.js')
+        })
+      });
+
       it('no manifest', () => {
         const cfg = {
           src,

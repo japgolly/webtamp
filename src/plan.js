@@ -20,55 +20,57 @@ const
  * @param  {Bool | Path => Maybe ManifestName} manifest
  */
 const planLocal =
-  ({ src, target, state, mkOutputNameFn }, outputNameFn0) => inArray =>
-  (name, { files, outputName, outputPath, manifest }) =>
-  state.checkThenRunIfNoErrors(() => {
-    if (!files)
-      state.addError(`${name} missing key: files`);
-    if (manifest === true && inArray)
-      state.addError(`${name} has {manifest: true} but requires an explicit name or function.`);
-  }, () => {
-    const fs = Glob.sync(files, { cwd: src, nodir: true }).sort();
-    if (fs.length == 0)
-      state.addWarn(`${name} file(s) not found: ${files}`);
-    else {
-      const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
-      state.registerNow(name);
+  ({ src, target, state, mkOutputNameFn }, outputNameFn0) => inArray => (name, value) => {
+    const { files, outputName, outputPath, manifest } = value;
+    state.checkThenRunIfNoErrors(() => {
+      if (!files)
+        state.addError(`${name} missing key: files`);
+      if (manifest === true && inArray)
+        state.addError(`${name} has {manifest: true} but requires an explicit name or function.`);
+    }, () => {
+      const src2 = value.src ? Path.resolve(src, value.src) : src;
+      const fs = Glob.sync(files, { cwd: src2, nodir: true }).sort();
+      if (fs.length == 0)
+        state.addWarn(`${name} file(s) not found: ${files}`);
+      else {
+        const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
+        state.registerNow(name);
 
-      // Add each local file
-      for (const f of fs) {
-        const srcFilename = Path.resolve(src, f);
-        const contents = Utils.memoise(() => FS.readFileSync(srcFilename));
-        let newName = outputNameFn({ name: f, contents });
-        if (outputPath)
-          newName = `${outputPath}/${newName}`;
+        // Add each local file
+        for (const f of fs) {
+          const srcFilename = Path.resolve(src2, f);
+          const contents = Utils.memoise(() => FS.readFileSync(srcFilename));
+          let newName = outputNameFn({ name: f, contents });
+          if (outputPath)
+            newName = `${outputPath}/${newName}`;
 
-        // Copy file
-        state.addOp({
-          type: 'copy',
-          from: [src, f],
-          to: [target, newName],
-        });
+          // Copy file
+          state.addOp({
+            type: 'copy',
+            from: [src2, f],
+            to: [target, newName],
+          });
 
-        // Add to manifest
-        if (manifest) {
-          const add = n => state.addManifestEntryLocal(n, '/' + newName);
-          if (manifest === true) {
-            if (fs.length > 1)
-              state.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
-            else
-              add(name);
-          } else if (typeof manifest === 'string')
-            add(manifest);
-          else {
-            const manifestName = manifest(f);
-            if (manifestName)
-              add(manifestName);
+          // Add to manifest
+          if (manifest) {
+            const add = n => state.addManifestEntryLocal(n, '/' + newName);
+            if (manifest === true) {
+              if (fs.length > 1)
+                state.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
+              else
+                add(name);
+            } else if (typeof manifest === 'string')
+              add(manifest);
+            else {
+              const manifestName = manifest(f);
+              if (manifestName)
+                add(manifestName);
+            }
           }
         }
       }
-    }
-  });
+    })
+  };
 
 const planCdn =
   ({ src, state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity, manifest }) =>

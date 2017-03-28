@@ -13,6 +13,7 @@ export default {
       type: 'local',
       files: 'images/**/*.{png,jpg}',
       // manifest: false,       // Bool | Path => Maybe ManifestName
+      // src: undefined,        // String
       // outputPath: undefined, // String
       // outputName: undefined, // NameTemplate
     }
