@@ -14,6 +14,7 @@ const
   image1SvgSha256 = 'sha256-A/Q7jy5ivY2cPMuPnY+LJpxE7xyEJhPi5UchebJAaVA=',
   image2SvgSha256 = 'sha256-iN39iYUkBuORbiinlAfVZAPIrV558O7KzRSzSP0aZng=',
   image2SvgSha384 = 'sha384-MY1+aNx3EQM6G5atTiVuZcv6x2a+erMjYoaEH7WPHA6CpuihomIrPuqDHpL48fWI',
+  jqueryUrl = 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js',
   src = Path.resolve(__dirname, 'data'),
   target = '/tmp/tool-thingy';
 
@@ -306,7 +307,7 @@ describe('Plan', () => {
     });
 
     describe('cdn', () => {
-      const url = 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js';
+      const url = jqueryUrl;
 
       const test = (def, expectFn) => {
         const cfg = { src, output: { dir: target }, assets: { x: Object.assign({ type: 'cdn' }, def) } };
@@ -374,7 +375,7 @@ describe('Plan', () => {
           output: { dir: target },
           assets: {
             a: 'b',
-            m: [svgs, 'n'],
+            m: [svgs, 'n', 'j'],
           },
           optional: {
             x: { type: 'external', path: 'x' }, // not referenced
@@ -383,7 +384,8 @@ describe('Plan', () => {
             d: [vizJsExplicit, 'e'],
             e: 'f',
             f: { type: 'external', path: 'f' },
-            n: [{ type: 'external', path: 'n', manifest: 'n' }]
+            n: [{ type: 'external', path: 'n', manifest: 'n' }],
+            j: { type: 'cdn', url: jqueryUrl, integrity: image1SvgSha256 },
           },
         };
         assertState(cfg, expect => {
@@ -392,6 +394,7 @@ describe('Plan', () => {
           expect.addManifestEntryLocal('vizJs', '/viz.js');
           expect.addManifestEntryLocal('f', '/f');
           expect.addManifestEntryLocal('n', '/n');
+          expect.addManifestEntryCdn('j', { url: jqueryUrl, integrity: image1SvgSha256 });
         });
         // console.log(Plan.run(cfg));
       });

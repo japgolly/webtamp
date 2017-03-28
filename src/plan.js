@@ -114,8 +114,10 @@ const planCdn =
     } else
       state.addError(`${desc} has an invalid integrity value: ${JSON.stringify(integrity)}`);
     if (i)
-      arityAwareManifestName(state, url, inArray, name, manifest,
-        n => state.addManifestEntryCdn(n, { url, integrity: i }));
+      arityAwareManifestName(state, url, inArray, name, manifest, n => {
+        state.registerNow(n);
+        state.addManifestEntryCdn(n, { url, integrity: i });
+      });
   })
 
 const arityAwareManifestName = (state, subname, inArray, name, manifest, use) => {
