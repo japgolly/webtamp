@@ -5,7 +5,9 @@
   "author": "David Barri <japgolly@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "glob": "^7.1.1"
+    "camelcase": "^4.0.0",
+    "glob": "^7.1.1",
+    "mime-types": "^2.1.15"
   },
   "devDependencies": {
     "chai": "^3.5.0",

@@ -223,6 +223,12 @@ function run(config) {
     // Graph dependencies
     state.resolvePending();
     state.graphDependencies();
+
+    // Plugins
+    for (const p of Utils.asArray(config.plugins)) {
+      if (state.ok())
+        p(state);
+    }
   }
 
   return state;

@@ -1,6 +1,8 @@
 const Crypto = require('crypto');
 
-const asArray = v => flatten([v]);
+const asArray = v => v === undefined ? [] : flatten([v]);
+
+const fixRelativePath = s => s ? s.replace(/^(?:\.\/+)*\/*/g, '') : s;
 
 const flatten = array =>
   array.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []);
@@ -25,6 +27,7 @@ const memoise = fn => {
 
 module.exports = {
   asArray,
+  fixRelativePath,
   flatten,
   hashData,
   mapObjectValues,
