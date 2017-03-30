@@ -169,11 +169,26 @@ describe('Plan', () => {
       Object.freeze(valueA);
       Object.freeze(valueB);
 
-      it('manifest name from asset name', () => {
+      it('manifest data not required', () => {
         const cfg = {
           src,
           output: { dir: target },
           assets: { extA: valueA, extB: valueB },
+        };
+        testPlan(cfg, expect => {
+          okA(expect);
+          okB(expect);
+        });
+      });
+
+      it('{manifest: true} reads manifest name from asset name', () => {
+        const cfg = {
+          src,
+          output: { dir: target },
+          assets: {
+            extA: Object.assign({ manifest: true }, valueA),
+            extB: Object.assign({ manifest: true }, valueB),
+          },
         };
         testPlan(cfg, expect => {
           okA(expect, "extA");
@@ -197,40 +212,13 @@ describe('Plan', () => {
           okB(expect, "extB");
         });
       });
-
-      it('manifest names required', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
-          assets: { exts: [valueA, valueB] },
-        };
-        testPlan(cfg, expect => {
-          expect.addError(`exts:${subname(valueA)} requires an explicit manifest name because it's in an array.`);
-          expect.addError(`exts:${subname(valueB)} requires an explicit manifest name because it's in an array.`);
-        });
-      });
-
-      it('error if manifest setting not a string', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
-          assets: {
-            extA: Object.assign({ manifest: false }, valueA),
-            extB: Object.assign({ manifest: f => f }, valueB),
-          },
-        };
-        testPlan(cfg, expect => {
-          expect.addError("extA has an invalid manifest: false");
-          expect.addError("extB has an invalid manifest: undefined");
-        });
-      });
     };
 
     describe('external', () => {
       const a = { type: 'external', path: 'a.js' };
       const b = { type: 'external', path: '/b.js' };
-      const okA = (expect, name) => expect.addManifestEntryLocal(name, '/a.js');
-      const okB = (expect, name) => expect.addManifestEntryLocal(name, '/b.js');
+      const okA = (expect, mName) => { if (mName) expect.addManifestEntryLocal(mName, '/a.js') };
+      const okB = (expect, mName) => { if (mName) expect.addManifestEntryLocal(mName, '/b.js') };
       testManifestRequiredInArray(a, b, i => i.path, okA, okB);
     });
 
@@ -293,7 +281,7 @@ describe('Plan', () => {
       const url = jqueryUrl;
 
       const test = (def, expectFn) => {
-        const cfg = { src, output: { dir: target }, assets: { x: Object.assign({ type: 'cdn' }, def) } };
+        const cfg = { src, output: { dir: target }, assets: { x: Object.assign({ type: 'cdn', manifest: true }, def) } };
         testPlan(cfg, expectFn);
       };
 
@@ -346,8 +334,8 @@ describe('Plan', () => {
       const url2 = 'https://unpkg.com/react@15.3.1/dist/react.min.js';
       const a = { type: 'cdn', url: url, integrity: image1SvgSha256 };
       const b = { type: 'cdn', url: url2, integrity: image2SvgSha256 };
-      const okA = (expect, name) => expect.addManifestEntryCdn(name, { url: url, integrity: image1SvgSha256 });
-      const okB = (expect, name) => expect.addManifestEntryCdn(name, { url: url2, integrity: image2SvgSha256 });
+      const okA = (expect, mName) => { if (mName) expect.addManifestEntryCdn(mName, { url: url, integrity: image1SvgSha256 }) };
+      const okB = (expect, mName) => { if (mName) expect.addManifestEntryCdn(mName, { url: url2, integrity: image2SvgSha256 }) };
       testManifestRequiredInArray(a, b, i => i.url, okA, okB);
     });
 
@@ -364,19 +352,21 @@ describe('Plan', () => {
             x: { type: 'external', path: 'x' }, // not referenced
             b: ['c'],
             c: ['d', 'e', 'm'],
-            d: [vizJsExplicit, 'e'],
+            d: [vizJsExplicit, 'e', 'k'],
             e: 'f',
-            f: { type: 'external', path: 'f' },
+            f: [{ type: 'external', path: 'f' }, 'l'],
             n: [{ type: 'external', path: 'n', manifest: 'n' }],
-            j: { type: 'cdn', url: jqueryUrl, integrity: image1SvgSha256 },
+            j: { type: 'cdn', url: jqueryUrl, integrity: image1SvgSha256, manifest: true },
+            k: { type: 'cdn', url: jqueryUrl + '/k', integrity: image2SvgSha256 },
+            l: [{ type: 'external', path: 'l', manifest: 'l' }],
           },
         };
         testPlan(cfg, expect => {
           addSvgExpectations(expect);
           expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
           expect.addManifestEntryLocal('vizJs', '/viz.js');
-          expect.addManifestEntryLocal('f', '/f');
           expect.addManifestEntryLocal('n', '/n');
+          expect.addManifestEntryLocal('l', '/l');
           expect.addManifestEntryCdn('j', { url: jqueryUrl, integrity: image1SvgSha256 });
         });
         // console.log(Plan.run(cfg));

@@ -4,7 +4,7 @@ const
   Plugins = require('../../src/plugins'),
   TestData = require('../data');
 
-const { src, target, jqueryCdn, jqueryUrlEntry, jqueryManifestEntry } = TestData;
+const { src, target, jqueryCdnM, jqueryUrlEntry, jqueryManifestEntry } = TestData;
 
 describe('Plugins.Modify', () => {
   describe('rename', () => {
@@ -40,7 +40,7 @@ describe('Plugins.Modify', () => {
     });
 
     it("ignores type: cdn", () => {
-      const cfg = makeCfg({ assets: { hello: jqueryCdn } })
+      const cfg = makeCfg({ assets: { hello: jqueryCdnM } })
       cfg.plugins = [Plugins.Modify.rename(/.js$/, f => f + ".nope")];
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);

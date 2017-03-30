@@ -30,6 +30,8 @@ const data = {
 
 data.jqueryUrl = data.jqueryCdn.url;
 
+data.jqueryCdnM = Object.assign({manifest: true}, data.jqueryCdn);
+
 data.jqueryManifestEntry = Object.freeze({
   cdn: {
     url: data.jqueryCdn.url,

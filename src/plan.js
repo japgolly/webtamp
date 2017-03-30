@@ -31,9 +31,42 @@ const foldAsset = (state, cases) => {
 }
 
 /**
+ * @param {State} state
+ * @param {String} desc
+ * @param {Any} manifestSetting Whatever the user has specified as their manifest setting
+ * @param {() => ?String)} nameWhenTrue
+ * @param {() => Any} fnArg
+ * @param {String => ()} addFn
+ */
+const addManifest = (state, desc, manifestSetting, nameWhenTrue, fnArg, addFn) => {
+  if (manifestSetting) {
+    const maybeAdd = n => { if (n) addFn(n) };
+    if (manifestSetting === true)
+      maybeAdd(nameWhenTrue());
+    else if (typeof manifestSetting === 'string')
+      addFn(manifestSetting);
+    else if (typeof manifestSetting === 'function')
+      maybeAdd(manifestSetting(fnArg()));
+    else
+      state.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifestSetting)}`);
+  }
+}
+
+const arityAwareManifestName = (state, subname, inArray, name, manifest, fnArg, use) => {
+  const desc = inArray ? `${name}:${subname}` : name;
+  const whenTrue = () => {
+    if (inArray)
+      state.addError(`${desc} requires an explicit manifest name because it's in an array.`);
+    else
+      return name;
+  }
+  addManifest(state, desc, manifest, whenTrue, fnArg, use);
+}
+
+/**
  * @param  {String}                            src
  * @param  {String}                            target
- * @param  {State}                           state
+ * @param  {State}                             state
  * @param  {NameTemplate => OutputNameFn}      mkOutputNameFn
  * @param  {OutputNameFn}                      outputNameFn0
  * @param  {Bool}                              inArray
@@ -80,21 +113,13 @@ const planLocal =
           state.addUrl(name, { url });
 
           // Add to manifest
-          if (manifest) {
-            const add = n => state.addManifestEntryLocal(n, url);
-            if (manifest === true) {
-              if (fs.length > 1)
-                state.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
-              else
-                add(name);
-            } else if (typeof manifest === 'string')
-              add(manifest);
-            else {
-              const manifestName = manifest(f);
-              if (manifestName)
-                add(manifestName);
-            }
+          const whenTrue = () => {
+            if (fs.length > 1)
+              state.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
+            else
+              return name;
           }
+          addManifest(state, name, manifest, whenTrue, () => f, n => state.addManifestEntryLocal(n, url));
         }
       }
     })
@@ -141,26 +166,16 @@ const planCdn =
 
     } else
       state.addError(`${desc} has an invalid integrity value: ${JSON.stringify(integrity)}`);
-    if (i)
-      arityAwareManifestName(state, url, inArray, name, manifest, n => {
-        const o = { url, integrity: i };
-        state.registerNow(n);
-        state.addUrl(name, Object.assign({ crossorigin: 'anonymous' }, o));
+    if (i) {
+      const o = { url, integrity: i };
+      const fnArg = () => o;
+      state.registerNow(name);
+      state.addUrl(name, Object.assign({ crossorigin: 'anonymous' }, o));
+      arityAwareManifestName(state, url, inArray, name, manifest, fnArg, n => {
         state.addManifestEntryCdn(n, o);
       });
+    }
   })
-
-const arityAwareManifestName = (state, subname, inArray, name, manifest, use) => {
-  const desc = inArray ? `${name}:${subname}` : name;
-  if (typeof manifest === 'string')
-    use(manifest);
-  else if (typeof manifest !== 'undefined')
-    state.addError(`${desc} has an invalid manifest: ${JSON.stringify(manifest)}`);
-  else if (inArray)
-    state.addError(`${desc} requires an explicit manifest name because it's in an array.`);
-  else
-    use(name);
-}
 
 const planExternal =
   ({ state }) => inArray => (name, { path, manifest }) =>
@@ -168,13 +183,12 @@ const planExternal =
     if (!path)
       state.addError(`${name} missing key: path`);
   }, () => {
-    const add = n => {
-      const url = path.replace(/^\/?/, '/');
-      state.registerNow(n);
-      state.addUrl(name, { url });
+    const url = path.replace(/^\/?/, '/');
+    state.registerNow(name);
+    state.addUrl(name, { url });
+    arityAwareManifestName(state, path, inArray, name, manifest, () => path, n => {
       state.addManifestEntryLocal(n, url);
-    };
-    arityAwareManifestName(state, path, inArray, name, manifest, add);
+    });
   })
 
 const planRef = ({ state }) => (name, refName) => {
