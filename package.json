@@ -7,7 +7,7 @@
     "url": "https://github.com/japgolly/webtamp.git"
   },
   "homepage": "https://github.com/japgolly/webtamp",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "src/main.js",
   "bin": "src/cli.js",
   "dependencies": {
