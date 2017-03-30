@@ -27,6 +27,6 @@
     "node": ">=7"
   },
   "scripts": {
-    "test": "./mocha 'test/**/*Test.js'"
+    "test": "./node_modules/.bin/mocha 'test/**/*Test.js'"
   }
 }
