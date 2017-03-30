@@ -7,7 +7,7 @@ const
 // criteria :: {manifestName, src, dest, stat(), size()} =>
 //             undefined | Bool | (mime-type :: null | string)
 
-const inline = criteria => state => {
+const inlineData = criteria => state => {
   for (const [name, value] of Object.entries(state.manifest)) {
     const dest = Utils.fixRelativePath(value.local);
     const op = dest && state.ops.find(copiesTo(dest));
@@ -48,4 +48,6 @@ const inline = criteria => state => {
 const copiesTo = path => op =>
   op.type === 'copy' && Utils.fixRelativePath(op.to[1]) === path;
 
-module.exports = inline;
+module.exports = {
+  data: inlineData,
+};
