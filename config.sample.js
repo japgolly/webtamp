@@ -5,7 +5,7 @@ export default {
   output: {
     // dir: "target",
     // name: '[basename]', // NameTemplate
-    // manifest: 'manifest.json', // String
+    // manifest: 'manifest.json', // Bool | String
   },
 
   assets: {
@@ -22,7 +22,7 @@ export default {
     name: {
       type: 'external',
       path: 'whatever.js',
-      // manifest: undefined, // String
+      // manifest: false,       // Bool | Path => Maybe ManifestName
     },
 
     name: {
@@ -34,7 +34,7 @@ export default {
       //   algo: 'sha256', // String | Array String
       // },
       // crossorigin: "anonymous",
-      // manifest: undefined, // String
+      // manifest: false,       // Bool | Url => Maybe ManifestName
     },
 
     name: "asset name",
@@ -45,4 +45,8 @@ export default {
   optional: {
     // same as 'assets' above
   },
+
+  plugins: [
+    // State => Unit
+  ]
 }
