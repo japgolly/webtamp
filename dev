@@ -4,5 +4,5 @@ cd "$(dirname "$(readlink -e "$0")")" || exit 1
 # ./mocha --reporter min -w
 
 while true; do
-  find -type f -name '*.js' | entr -cr ./mocha
+  find -type f -name '*.js' | entr -cr ./mocha --recursive
 done

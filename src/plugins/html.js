@@ -5,7 +5,7 @@ const
   ModifyPlugin = require('./modify'),
   Path = require('path'),
   PostHtml = require('posthtml'),
-  Utils = require('./utils');
+  Utils = require('../utils');
 
 const isHtmlFile = i => /\.html$/.test(i.filename);
 

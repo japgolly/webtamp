@@ -2,7 +2,7 @@ const
   FS = require('fs'),
   Mime = require('mime-types'),
   Path = require('path'),
-  Utils = require('./utils');
+  Utils = require('../utils');
 
 // criteria :: {manifestName, src, dest, stat(), size()} =>
 //             undefined | Bool | (mime-type :: null | string)

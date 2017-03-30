@@ -1,16 +1,12 @@
 const
   Assert = require('chai').assert,
-  FS = require('fs'),
-  Path = require('path'),
-  Plan = require('../src/plan'),
-  ModifyPlugin = require('../src/modify'),
-  TestData = require('./data'),
-  TestUtil = require('./util'),
-  Utils = require('../src/utils');
+  Plan = require('../../src/plan'),
+  Plugins = require('../../src/plugins'),
+  TestData = require('../data');
 
 const { src, target, jqueryCdn, jqueryUrlEntry, jqueryManifestEntry } = TestData;
 
-describe('Modify plugin', () => {
+describe('Plugins.Modify', () => {
   describe('rename', () => {
 
     const makeCfg = o =>
@@ -18,7 +14,7 @@ describe('Modify plugin', () => {
 
     it("affects type: local", () => {
       const cfg = makeCfg({ assets: { hello: { type: 'local', files: 'hello.js' } } })
-      cfg.plugins = [ModifyPlugin.rename(/^copy-/, f => f.substring(5))];
+      cfg.plugins = [Plugins.Modify.rename(/^copy-/, f => f.substring(5))];
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/hello.js' }] });
@@ -27,7 +23,7 @@ describe('Modify plugin', () => {
 
     it("affects type: local with manifest", () => {
       const cfg = makeCfg({ assets: { hello: { type: 'local', files: 'hello.js', manifest: 'wow' } } })
-      cfg.plugins = [ModifyPlugin.rename(/^copy-/, f => f.substring(5))];
+      cfg.plugins = [Plugins.Modify.rename(/^copy-/, f => f.substring(5))];
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/hello.js' }] });
@@ -36,7 +32,7 @@ describe('Modify plugin', () => {
 
     it("uses specified filename test", () => {
       const cfg = makeCfg({ assets: { hello: { type: 'local', files: 'hello.js', manifest: 'wow' } } })
-      cfg.plugins = [ModifyPlugin.rename(/nope/, f => "nope")];
+      cfg.plugins = [Plugins.Modify.rename(/nope/, f => "nope")];
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/copy-hello.js' }] });
@@ -45,7 +41,7 @@ describe('Modify plugin', () => {
 
     it("ignores type: cdn", () => {
       const cfg = makeCfg({ assets: { hello: jqueryCdn } })
-      cfg.plugins = [ModifyPlugin.rename(/.js$/, f => f + ".nope")];
+      cfg.plugins = [Plugins.Modify.rename(/.js$/, f => f + ".nope")];
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [jqueryUrlEntry] });
@@ -54,7 +50,7 @@ describe('Modify plugin', () => {
 
     it("ignores type: external", () => {
       const cfg = makeCfg({ assets: { hello: { type: 'external', path: '/thing.js', manifest: 'wow' } } })
-      cfg.plugins = [ModifyPlugin.rename(/.js$/, f => f + ".nope")];
+      cfg.plugins = [Plugins.Modify.rename(/.js$/, f => f + ".nope")];
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/thing.js' }] });
