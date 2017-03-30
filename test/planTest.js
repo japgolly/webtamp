@@ -301,7 +301,7 @@ describe('Plan', () => {
       const testErr = (def, err) => test(def, expect => expect.addError(err));
 
       it('integrity specified', () => {
-        const integrity = 'sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT4‌​4=';
+        const integrity = TestData.jqueryCdn.integrity;
         testOk({ url, integrity }, { url, integrity });
       });
 

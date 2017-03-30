@@ -35,7 +35,7 @@ const inline = criteria => state => {
           else
             state.addError(`Error inlining ${name}. Invalid mime-type: ${JSON.stringify(result)}`);
         }, mimeType => {
-          state.ops = state.ops.filter(o => o !== op);
+          state.removeOp(op);
           const mediatype = mimeType === '' ? '' : `${mimeType};`;
           const data = FS.readFileSync(arg.src).toString("base64");
           state.manifest[name] = { url: `data:${mediatype}base64,${data}` };

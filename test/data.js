@@ -11,11 +11,38 @@ const data = {
   image2SvgSha256: 'sha256-iN39iYUkBuORbiinlAfVZAPIrV558O7KzRSzSP0aZng=',
   image2SvgSha384: 'sha384-MY1+aNx3EQM6G5atTiVuZcv6x2a+erMjYoaEH7WPHA6CpuihomIrPuqDHpL48fWI',
 
-  jqueryUrl: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js',
+  jqueryCdn: Object.freeze({
+    type: 'cdn',
+    url: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js',
+    integrity: 'sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT4‌​4=',
+  }),
+
+  bootstrapCssCdn: Object.freeze({
+    type: 'cdn',
+    url: 'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css',
+    integrity: 'sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ',
+  }),
 
   src: Path.resolve(__dirname, 'data'),
   target: '/tmp/tool-thingy',
   cfg: o => Object.assign({ src: data.src, output: { dir: data.target } }, o || {}),
 };
+
+data.jqueryUrl = data.jqueryCdn.url;
+
+data.jqueryManifestEntry = Object.freeze({
+  cdn: {
+    url: data.jqueryCdn.url,
+    integrity: data.jqueryCdn.integrity,
+  }
+});
+
+data.jqueryUrlEntry = Object.freeze({
+  url: data.jqueryCdn.url,
+  integrity: data.jqueryCdn.integrity,
+  crossorigin: 'anonymous',
+});
+
+Object.freeze(data);
 
 module.exports = data;

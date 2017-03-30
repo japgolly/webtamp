@@ -1,9 +1,12 @@
+const Utils = require('./utils');
+
 class State {
   constructor() {
     this.ops = [];
     this.errors = [];
     this.warns = [];
     this.manifest = {};
+    this.urls = {};
     this.deps = {};
     this.pending = {};
   }
@@ -16,6 +19,15 @@ class State {
   }
   addWarn(o) {
     this.warns.push(o)
+  }
+  addUrl(assetName, url) {
+    Utils.assertObject(['url'], ['integrity', 'crossorigin'])(url)
+    if (!this.urls[assetName]) this.urls[assetName] = [];
+    this.urls[assetName].push(url);
+  }
+
+  removeOp(op) {
+    this.ops = this.ops.filter(o => o !== op);
   }
 
   checkThenRunIfNoErrors(check, run) {

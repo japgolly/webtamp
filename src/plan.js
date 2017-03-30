@@ -76,9 +76,12 @@ const planLocal =
             to: [target, newName],
           });
 
+          const url = '/' + newName;
+          state.addUrl(name, { url });
+
           // Add to manifest
           if (manifest) {
-            const add = n => state.addManifestEntryLocal(n, '/' + newName);
+            const add = n => state.addManifestEntryLocal(n, url);
             if (manifest === true) {
               if (fs.length > 1)
                 state.addWarn(`${name} has {manifest: true} but '${files}' matches more than 1 file.`);
@@ -140,8 +143,10 @@ const planCdn =
       state.addError(`${desc} has an invalid integrity value: ${JSON.stringify(integrity)}`);
     if (i)
       arityAwareManifestName(state, url, inArray, name, manifest, n => {
+        const o = { url, integrity: i };
         state.registerNow(n);
-        state.addManifestEntryCdn(n, { url, integrity: i });
+        state.addUrl(name, Object.assign({ crossorigin: 'anonymous' }, o));
+        state.addManifestEntryCdn(n, o);
       });
   })
 
@@ -163,9 +168,11 @@ const planExternal =
     if (!path)
       state.addError(`${name} missing key: path`);
   }, () => {
-    const add = name => {
-      state.registerNow(name);
-      state.addManifestEntryLocal(name, path.replace(/^\/?/, '/'));
+    const add = n => {
+      const url = path.replace(/^\/?/, '/');
+      state.registerNow(n);
+      state.addUrl(name, { url });
+      state.addManifestEntryLocal(n, url);
     };
     arityAwareManifestName(state, path, inArray, name, manifest, add);
   })
@@ -185,7 +192,7 @@ function run(config) {
     ctx = { state, src, target, mkOutputNameFn };
   if (!FS.existsSync(src))
     state.errors.push(`Src dir doesn't exist: ${src}`);
-  if (typeof(config.assets) === 'undefined')
+  if (!config.assets)
     state.errors.push('config.assets undefined.');
 
   const outputNameFn = mkOutputNameFn(config.output.name || '[basename]');
@@ -226,7 +233,7 @@ function run(config) {
 
     // Plugins
     for (const p of Utils.asArray(config.plugins)) {
-      if (state.ok())
+      if (state.ok() && p)
         p(state);
     }
   }
