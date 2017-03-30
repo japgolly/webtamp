@@ -1,3 +1,5 @@
+"use strict";
+
 const
   Assert = require('chai').assert,
   CamelCase = require('camelcase'),

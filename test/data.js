@@ -1,3 +1,5 @@
+"use strict";
+
 const Path = require('path');
 
 // cat test/data/image1.svg | openssl dgst -sha256 -binary | openssl base64 -A

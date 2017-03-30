@@ -1,3 +1,5 @@
+"use strict";
+
 const
   Assert = require('chai').assert,
   Plan = require('../src/plan'),

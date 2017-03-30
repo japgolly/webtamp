@@ -1,3 +1,5 @@
+"use strict";
+
 const
   FS = require('fs'),
   Mime = require('mime-types'),

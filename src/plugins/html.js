@@ -1,3 +1,5 @@
+"use strict";
+
 const
   Entities = require("entities"),
   FS = require('fs'),

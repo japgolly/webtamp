@@ -1,3 +1,5 @@
+"use strict";
+
 const
   Action = require('./action'),
   Plan = require('./plan');

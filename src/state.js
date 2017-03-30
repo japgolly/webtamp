@@ -1,3 +1,5 @@
+"use strict";
+
 const Utils = require('./utils');
 
 class State {

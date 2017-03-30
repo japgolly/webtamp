@@ -1,3 +1,5 @@
+"use strict";
+
 const
   Crypto = require('crypto'),
   Util = require('util');
