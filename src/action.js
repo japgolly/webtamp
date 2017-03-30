@@ -44,8 +44,8 @@ const recordStats = stats => {
 }
 
 const runnerLog = {
-  copy: op => console.log(`Copy ${op.to[1]} ← ${op.from.abs}`),
-  write: op => console.log(`Write ${op.to[1]} ← ${op.content.length} bytes`),
+  copy: op => console.log(`Copy ${op.to.path} ← ${op.from.abs}`),
+  write: op => console.log(`Write ${op.to.path} ← ${op.content.length} bytes`),
 };
 
 const runnerPerform = {

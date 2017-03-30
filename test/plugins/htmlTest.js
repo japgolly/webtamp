@@ -27,18 +27,17 @@ function testPage1(cfg, expectedReplacement, { expectMod = e => e } = {}) {
   const state = Plan.run(prepPage1(cfg));
   Assert.deepEqual(state.errors, []);
   const to = 'out-page1.html';
-  const ops = state.ops.filter(op => op.to[1] === to);
   const expect = expectMod(page1Content).replace(requireTag, expectedReplacement);
   const norm = i => {
     const o = Object.assign({}, i);
     o.content = o.content.split("\n")
     return o;
   }
-  Assert.deepEqual(ops.map(norm), [{
+  TestUtil.assertOps(state.ops, op => op.to.path === to, [{
     type: 'write',
     to: [target, to],
     content: expect,
-  }].map(norm));
+  }], norm);
 }
 
 function testError(expectedErrors, cfg, cfgMod) {

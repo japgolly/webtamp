@@ -75,6 +75,17 @@ class LocalSrc {
   }
 }
 
+class OutputFile {
+  constructor(ctx, path) {
+    this.ctx = ctx;
+    this.path = fixRelativePath(path);
+    this.abs = Path.resolve(this.ctx, this.path);
+  }
+  withNewPath(path) {
+    return new OutputFile(this.ctx, path);
+  }
+}
+
 module.exports = {
   assertObject,
   asArray,
@@ -88,4 +99,5 @@ module.exports = {
   memoise,
   tap,
   LocalSrc,
+  OutputFile,
 }

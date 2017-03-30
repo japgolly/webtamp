@@ -1,6 +1,6 @@
 "use strict";
 
-const Utils = require('./utils');
+const { assertObject, OutputFile } = require('./utils');
 
 class State {
   constructor(src, target) {
@@ -22,13 +22,13 @@ class State {
     this.addOp({
       type: 'copy',
       from,
-      to: [this.target, to],
+      to: new OutputFile(this.target, to),
     })
   }
   addOpWrite(to, content) {
     this.addOp({
       type: 'write',
-      to: [this.target, to],
+      to: new OutputFile(this.target, to),
       content,
     })
   }
@@ -40,7 +40,7 @@ class State {
     this.warns.push(o)
   }
   addUrl(assetName, url) {
-    Utils.assertObject(['url'], ['integrity', 'crossorigin'])(url)
+    assertObject(['url'], ['integrity', 'crossorigin'])(url)
     if (!this.urls[assetName]) this.urls[assetName] = [];
     this.urls[assetName].push(url);
   }

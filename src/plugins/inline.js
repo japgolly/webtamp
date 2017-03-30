@@ -47,7 +47,7 @@ const inlineData = criteria => state => {
 };
 
 const copiesTo = path => op =>
-  op.type === 'copy' && Utils.fixRelativePath(op.to[1]) === path;
+  op.type === 'copy' && op.to.path === path;
 
 module.exports = {
   data: inlineData,

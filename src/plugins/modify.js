@@ -22,9 +22,9 @@ const main = logic => state => {
       const contentChanged = result.newContent !== undefined && result.newContent !== input.content();
       const newContent = contentChanged ? result.newContent : input.content();
 
-      const oldFilename = op.to[1];
+      const oldFilename = op.to.path;
       const newFilename = result.newFilename !== undefined ? Utils.fixRelativePath(result.newFilename) : oldFilename;
-      const newTo = [op.to[0], newFilename];
+      const newTo = op.to.withNewPath(newFilename);
       const filenameChanged = newFilename !== oldFilename;
 
       const newOp =
@@ -66,11 +66,11 @@ const main = logic => state => {
 
   for (const op of state.ops) {
     if (op.type === 'copy') {
-      const filename = op.to[1];
+      const filename = op.to.path;
       const content = () => op.from.content().toString();
       attempt(op, { filename, content })
     } else if (op.type === 'write') {
-      const filename = op.to[1];
+      const filename = op.to.path;
       const content = () => op.content;
       attempt(op, { filename, content })
     }

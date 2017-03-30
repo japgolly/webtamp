@@ -22,12 +22,21 @@ const removeGraph = tap(r => delete r.graph);
 const simplifyOp = ({
   copy: tap(op => {
     const f = op.from;
+    const t = op.to;
     op.from = [f.ctx, f.path];
+    op.to = [t.ctx, t.path];
+  }),
+  write: tap(op => {
+    const t = op.to;
+    op.to = [t.ctx, t.path];
   }),
 });
 
+const simplifyOpArray = ops =>
+  ops.map(op => (simplifyOp[op.type] || identity)(op));
+
 const simplifyTypes = tap(r => {
-  r.ops = r.ops.map(op => (simplifyOp[op.type] || identity)(op));
+  r.ops = simplifyOpArray(r.ops);
 });
 
 const defaultStateNormalisation = s =>
@@ -38,7 +47,14 @@ const testPlan = (normaliseState = defaultStateNormalisation) => {
   return (cfg, addExpectations) => f(Plan.run(cfg), addExpectations);
 };
 
+const assertOps = (ops, opCriteria, expect, normalise) => {
+  const normArray = normalise ? ops => ops.map(normalise) : identity;
+  const actual = simplifyOpArray(normArray(ops.filter(opCriteria))).sort();
+  Assert.deepEqual(actual, normArray(expect).sort());
+}
+
 module.exports = {
+  assertOps,
   assertState,
   defaultStateNormalisation,
   testPlan,

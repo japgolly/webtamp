@@ -5,7 +5,8 @@ const
   CamelCase = require('camelcase'),
   Plan = require('../../src/plan'),
   Plugins = require('../../src/plugins'),
-  TestData = require('../data');
+  TestData = require('../data'),
+  TestUtil = require('../util');
 
 const { target, vizJs, jqueryCdnM } = TestData;
 
@@ -28,8 +29,7 @@ describe('Plugins.ScalaManifest', () => {
     cfg.output.name = "[name]-[hash:16].[ext]";
     const state = Plan.run(cfg);
     Assert.deepEqual(state.errors, []);
-    const op = state.ops.filter(op => op.type === 'write' && op.to[1] === filename);
-    Assert.deepEqual(op, [{
+    TestUtil.assertOps(state.ops, op => op.type === 'write' && op.to.path === filename, [{
       type: 'write',
       to: [target, filename],
       content: `
