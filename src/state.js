@@ -3,7 +3,9 @@
 const Utils = require('./utils');
 
 class State {
-  constructor() {
+  constructor(src, target) {
+    this.src = src;
+    this.target = target;
     this.ops = [];
     this.errors = [];
     this.warns = [];
@@ -16,6 +18,21 @@ class State {
   addOp(o) {
     this.ops.push(o)
   }
+  addOpCopy(from, to) {
+    this.addOp({
+      type: 'copy',
+      from,
+      to: [this.target, to],
+    })
+  }
+  addOpWrite(to, content) {
+    this.addOp({
+      type: 'write',
+      to: [this.target, to],
+      content,
+    })
+  }
+
   addError(o) {
     this.errors.push(o)
   }

@@ -42,7 +42,7 @@ describe('Plugins.Inline', () => {
       const plugins = [Plugins.Inline.data(i => i.size() < 1000)];
       const cfg = TestData.cfg({ assets: { svgs123 }, plugins });
       testPlan(cfg, expect => {
-        expect.addOp({ type: 'copy', from: new LocalSrc(src, 'image3.svg'), to: [target, 'image3.svg'] });
+        expect.addOpCopy(new LocalSrc(src, 'image3.svg'), 'image3.svg');
         expect.addManifestEntry('image1Svg', { url: 'data:image/svg+xml;base64,aW1hZ2UxCg==' })
         expect.addManifestEntry('image2Svg', { url: 'data:image/svg+xml;base64,aW1hZ2UyCg==' })
         expect.addManifestEntryLocal('image3Svg', '/image3.svg')

@@ -67,8 +67,6 @@ const arityAwareManifestName = (state, subname, inArray, name, manifest, fnArg, 
 }
 
 /**
- * @param  {String}                            src
- * @param  {String}                            target
  * @param  {State}                             state
  * @param  {NameTemplate => OutputNameFn}      mkOutputNameFn
  * @param  {OutputNameFn}                      outputNameFn0
@@ -80,7 +78,7 @@ const arityAwareManifestName = (state, subname, inArray, name, manifest, fnArg, 
  * @param  {Bool | Path => Maybe ManifestName} manifest
  */
 const planLocal =
-  ({ src, target, state, mkOutputNameFn }, outputNameFn0) => inArray => (name, value) => {
+  ({ state, mkOutputNameFn }, outputNameFn0) => inArray => (name, value) => {
     const { files, outputName, outputPath, manifest } = value;
     state.checkThenRunIfNoErrors(() => {
       if (!files)
@@ -88,8 +86,8 @@ const planLocal =
       if (manifest === true && inArray)
         state.addError(`${name} has {manifest: true} but requires an explicit name or function.`);
     }, () => {
-      const src2 = value.src ? Path.resolve(src, value.src) : src;
-      const fs = Glob.sync(files, { cwd: src2, nodir: true }).sort();
+      const src = value.src ? Path.resolve(state.src, value.src) : state.src;
+      const fs = Glob.sync(files, { cwd: src, nodir: true }).sort();
       if (fs.length == 0)
         state.addWarn(`${name} file(s) not found: ${files}`);
       else {
@@ -98,7 +96,7 @@ const planLocal =
 
         // Add each local file
         for (const f of fs) {
-          const srcFilename = Path.resolve(src2, f);
+          const srcFilename = Path.resolve(src, f);
           const contents = Utils.memoise(() => FS.readFileSync(srcFilename));
           let newName = outputNameFn({ name: f, contents });
           if (outputPath)
@@ -106,11 +104,7 @@ const planLocal =
           newName = newName.replace(/^\.\//g, '');
 
           // Copy file
-          state.addOp({
-            type: 'copy',
-            from: new LocalSrc(src2, f),
-            to: [target, newName],
-          });
+          state.addOpCopy(new LocalSrc(src, f), newName);
 
           const url = '/' + newName;
           state.addUrl(name, { url });
@@ -129,7 +123,7 @@ const planLocal =
   };
 
 const planCdn =
-  ({ src, state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity, manifest }) =>
+  ({ state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity, manifest }) =>
   state.checkThenRunIfNoErrors(() => {
     if (!url)
       state.addError(`${name} missing key: url`);
@@ -147,7 +141,7 @@ const planCdn =
       const algos = Utils.asArray(integrity.algo || defaultAlgos);
       const { files } = integrity;
       if (files) {
-        const fs = Glob.sync(files, { cwd: src, nodir: true }).sort();
+        const fs = Glob.sync(files, { cwd: state.src, nodir: true }).sort();
         if (fs.length == 0)
           state.addError(`${desc} integrity file(s) not found: ${files}`);
         else
@@ -156,7 +150,7 @@ const planCdn =
             for (const algo of algos) {
               const hasher = Utils.hashData(algo, 'base64');
               for (const f of fs) {
-                const h = hasher(FS.readFileSync(Path.resolve(src, f)));
+                const h = hasher(FS.readFileSync(Path.resolve(state.src, f)));
                 hashes.push(`${algo}-${h}`);
               }
             }
@@ -200,14 +194,15 @@ const planRef = ({ state }) => (name, refName) => {
 
 const parse = config => {
   const
-    state = new State(),
     outputCfg = config.output || {},
-    src = Path.resolve(config.src || '.');
+    src = Path.resolve(config.src || '.'),
+    target = outputCfg.dir && Path.resolve(outputCfg.dir),
+    state = new State(src, target);
   if (!FS.existsSync(src))
     state.errors.push(`Src dir doesn't exist: ${src}`);
   if (!config.assets)
     state.errors.push('config.assets undefined.');
-  if (!outputCfg.dir)
+  if (!target)
     state.errors.push('config.output.dir undefined.');
 
   if (state.ok()) {
@@ -215,8 +210,7 @@ const parse = config => {
       outputNameFnDefaults = {},
       mkOutputNameFn = f => OutputName.make(f, outputNameFnDefaults),
       outputNameFn = mkOutputNameFn(config.output.name || '[basename]'),
-      target = Path.resolve(config.output.dir),
-      ctx = { state, src, target, mkOutputNameFn };
+      ctx = { state, mkOutputNameFn };
 
     const cases = {
       string: _ => planRef(ctx),
@@ -263,13 +257,8 @@ const runPlugins = cfg => Utils.tap(state => {
 
 const generateManifest = cfg => Utils.tap(state => {
   if (state.ok()) {
-    const target = Path.resolve(cfg.output.dir);
     const gen = filename => {
-      state.addOp({
-        type: 'write',
-        to: [target, filename],
-        content: JSON.stringify(state.manifest, null, '  '),
-      });
+      state.addOpWrite(filename, JSON.stringify(state.manifest, null, '  '));
     };
     const m = cfg.output.manifest;
     if (m === undefined || m === true)

@@ -7,7 +7,7 @@ const
   tap = require('../src/utils').tap;
 
 const assertState = normaliseState => (actual, addExpectations) => {
-  const expect = new State;
+  const expect = new State(actual.src, actual.target);
   addExpectations(expect);
   const e = normaliseState(expect);
   const a = normaliseState(actual);
