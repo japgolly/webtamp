@@ -11,7 +11,6 @@ const
   Utils = require('../../src/utils');
 
 const { src, target, jqueryCdn, bootstrapCssCdn } = TestData;
-// const testPlan = TestUtil.testPlan(TestUtil.stateResultsMinusGraph);
 
 const page1Content = FS.readFileSync(src + "/page1.html").toString();
 const requireTag = '<require asset="chosen" />';

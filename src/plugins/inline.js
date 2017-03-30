@@ -1,7 +1,6 @@
 "use strict";
 
 const
-  FS = require('fs'),
   Mime = require('mime-types'),
   Path = require('path'),
   Utils = require('../utils');
@@ -17,10 +16,10 @@ const inlineData = criteria => state => {
 
       const arg = {
         manifestName: name,
-        src: Path.join(op.from[0], op.from[1]),
+        src: op.from.abs,
+        stat: op.from.stat,
+        size: op.from.size,
         dest,
-        stat: Utils.memoise(() => FS.statSync(arg.src)),
-        size: () => arg.stat().size,
       }
 
       const result = criteria(arg);
@@ -39,7 +38,7 @@ const inlineData = criteria => state => {
         }, mimeType => {
           state.removeOp(op);
           const mediatype = mimeType === '' ? '' : `${mimeType};`;
-          const data = FS.readFileSync(arg.src).toString("base64");
+          const data = op.from.content().toString("base64");
           state.manifest[name] = { url: `data:${mediatype}base64,${data}` };
         });
 

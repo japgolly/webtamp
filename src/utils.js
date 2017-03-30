@@ -2,6 +2,8 @@
 
 const
   Crypto = require('crypto'),
+  FS = require('fs'),
+  Path = require('path'),
   Util = require('util');
 
 const assert = (cond, msg) => {
@@ -46,6 +48,22 @@ const memoise = fn => {
   return () => r[0] || (r[0] = fn()) || r[0];
 };
 
+const tap = f => a => {
+  f(a);
+  return a;
+}
+
+class LocalSrc {
+  constructor(ctx, path) {
+    this.ctx = ctx;
+    this.path = fixRelativePath(path);
+    this.abs = Path.resolve(this.ctx, this.path);
+    this.stats = memoise(() => FS.statSync(this.abs));
+    this.size = () => this.stats().size;
+    this.content = memoise(() => FS.readFileSync(this.abs));
+  }
+}
+
 module.exports = {
   assertObject,
   asArray,
@@ -55,4 +73,6 @@ module.exports = {
   inspect,
   mapObjectValues,
   memoise,
+  tap,
+  LocalSrc,
 }

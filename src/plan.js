@@ -6,7 +6,8 @@ const
   OutputName = require('./outputName'),
   Path = require('path'),
   State = require('./state'),
-  Utils = require('./utils');
+  Utils = require('./utils'),
+  LocalSrc = Utils.LocalSrc;
 
 const foldAsset = (state, cases) => {
   const go = inArray => (name, value) => {
@@ -107,7 +108,7 @@ const planLocal =
           // Copy file
           state.addOp({
             type: 'copy',
-            from: [src2, f],
+            from: new LocalSrc(src2, f),
             to: [target, newName],
           });
 

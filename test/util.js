@@ -3,7 +3,8 @@
 const
   Assert = require('chai').assert,
   Plan = require('../src/plan'),
-  State = require('../src/state');
+  State = require('../src/state'),
+  tap = require('../src/utils').tap;
 
 const assertState = normaliseState => (actual, addExpectations) => {
   const expect = new State;
@@ -14,19 +15,31 @@ const assertState = normaliseState => (actual, addExpectations) => {
   return a;
 };
 
-const stateResultsMinusGraph = s => {
-  const o = s.results()
-  o.graph = undefined;
-  return o;
-};
+const identity = a => a;
 
-const testPlan = normaliseState => {
-  const f = assertState(normaliseState)
+const removeGraph = tap(r => delete r.graph);
+
+const simplifyOp = ({
+  copy: tap(op => {
+    const f = op.from;
+    op.from = [f.ctx, f.path];
+  }),
+});
+
+const simplifyTypes = tap(r => {
+  r.ops = r.ops.map(op => (simplifyOp[op.type] || identity)(op));
+});
+
+const defaultStateNormalisation = s =>
+  removeGraph(simplifyTypes(s.results()));
+
+const testPlan = (normaliseState = defaultStateNormalisation) => {
+  const f = assertState(normaliseState);
   return (cfg, addExpectations) => f(Plan.run(cfg), addExpectations);
 };
 
 module.exports = {
   assertState,
-  stateResultsMinusGraph,
+  defaultStateNormalisation,
   testPlan,
 }

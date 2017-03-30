@@ -7,10 +7,11 @@ const
   Plan = require('../../src/plan'),
   Plugins = require('../../src/plugins'),
   TestData = require('../data'),
-  TestUtil = require('../util');
+  TestUtil = require('../util'),
+  LocalSrc = require('../../src/utils').LocalSrc;
 
 const { src, target } = TestData;
-const testPlan = TestUtil.testPlan(TestUtil.stateResultsMinusGraph);
+const testPlan = TestUtil.testPlan();
 const svgs123 = { type: 'local', files: '*{1,2,3}.svg', manifest: CamelCase };
 const svg1 = { type: 'local', files: 'image1.svg', manifest: true };
 
@@ -41,7 +42,7 @@ describe('Plugins.Inline', () => {
       const plugins = [Plugins.Inline.data(i => i.size() < 1000)];
       const cfg = TestData.cfg({ assets: { svgs123 }, plugins });
       testPlan(cfg, expect => {
-        expect.addOp({ type: 'copy', from: [src, 'image3.svg'], to: [target, 'image3.svg'] });
+        expect.addOp({ type: 'copy', from: new LocalSrc(src, 'image3.svg'), to: [target, 'image3.svg'] });
         expect.addManifestEntry('image1Svg', { url: 'data:image/svg+xml;base64,aW1hZ2UxCg==' })
         expect.addManifestEntry('image2Svg', { url: 'data:image/svg+xml;base64,aW1hZ2UyCg==' })
         expect.addManifestEntryLocal('image3Svg', '/image3.svg')

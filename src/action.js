@@ -36,7 +36,7 @@ const recordStats = stats => {
     op: {
       copy: op => {
         inc('files');
-        add(FS.statSync(Path.resolve(op.from[0], op.from[1])).size)('bytes');
+        add(op.from.size())('bytes');
       },
       write: op => {
         inc('files');
@@ -49,7 +49,7 @@ const recordStats = stats => {
 
 const runnerLog = {
   op: {
-    copy: op => console.log(`Copy ${op.to[1]} ← ${op.from[0]}/${op.from[1]}`),
+    copy: op => console.log(`Copy ${op.to[1]} ← ${op.from.abs}`),
     write: op => console.log(`Write ${op.to[1]} ← ${op.content.length} bytes`),
   },
   manifest: (to, json) => console.log(`\nWrite manifest to ${to}:\n${json}`)

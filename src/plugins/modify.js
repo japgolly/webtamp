@@ -1,7 +1,6 @@
 "use strict";
 
 const
-  FS = require('fs'),
   Path = require('path'),
   Utils = require('../utils');
 
@@ -68,7 +67,7 @@ const main = logic => state => {
   for (const op of state.ops) {
     if (op.type === 'copy') {
       const filename = op.to[1];
-      const content = Utils.memoise(() => FS.readFileSync(Path.join(op.from[0], op.from[1])).toString());
+      const content = () => op.from.content().toString();
       attempt(op, { filename, content })
     } else if (op.type === 'write') {
       const filename = op.to[1];

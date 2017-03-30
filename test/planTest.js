@@ -6,7 +6,8 @@ const
   Plan = require('../src/plan'),
   State = require('../src/state'),
   TestData = require('./data'),
-  TestUtil = require('./util');
+  TestUtil = require('./util'),
+  LocalSrc = require('../src/utils').LocalSrc;
 
 const { vizJs, vizJsExplicit, image1SvgSha256, image2SvgSha256, image2SvgSha384, jqueryUrl, src, target } = TestData;
 
@@ -15,7 +16,7 @@ const svgs = { type: 'local', files: '*{1,2}.svg', manifest: f => f.replace(/\.s
 function addSvgExpectations(expect) {
   for (const i of [1, 2]) {
     const f = `image${i}.svg`;
-    expect.addOp({ type: 'copy', from: [src, f], to: [target, f] });
+    expect.addOp({ type: 'copy', from: new LocalSrc(src, f), to: [target, f] });
     expect.addManifestEntryLocal(`image${i}Svg`, '/' + f)
   }
 }
@@ -25,7 +26,7 @@ function addSvgExpectations(expect) {
 describe('Plan', () => {
   describe('run', () => {
 
-    const testPlan = TestUtil.testPlan(TestUtil.stateResultsMinusGraph);
+    const testPlan = TestUtil.testPlan();
 
     describe('local', () => {
 
@@ -38,7 +39,7 @@ describe('Plan', () => {
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
-            from: [src, 'vendor/viz.js'],
+            from: new LocalSrc(src, 'vendor/viz.js'),
             to: [target, 'viz.js']
           });
           expect.addManifestEntryLocal('vizJs', '/viz.js')
@@ -54,7 +55,7 @@ describe('Plan', () => {
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
-            from: [src + '/vendor', 'viz.js'],
+            from: new LocalSrc(src + '/vendor', 'viz.js'),
             to: [target, 'viz.js']
           });
           expect.addManifestEntryLocal('vizJs', '/viz.js')
@@ -70,7 +71,7 @@ describe('Plan', () => {
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
-            from: [src, 'vendor/viz.js'],
+            from: new LocalSrc(src, 'vendor/viz.js'),
             to: [target, 'viz.js']
           });
         });
@@ -85,7 +86,7 @@ describe('Plan', () => {
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
-            from: [src, 'vendor/viz.js'],
+            from: new LocalSrc(src, 'vendor/viz.js'),
             to: [target, 'viz.js']
           });
           expect.addManifestEntryLocal('omgJs', '/viz.js')
@@ -112,7 +113,7 @@ describe('Plan', () => {
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
-            from: [src, 'vendor/viz.js'],
+            from: new LocalSrc(src, 'vendor/viz.js'),
             to: [target, 'e4e91995e194dd59cafba1c0dad576c6.js']
           });
           expect.addManifestEntryLocal('vizJs', '/e4e91995e194dd59cafba1c0dad576c6.js')
@@ -141,7 +142,7 @@ describe('Plan', () => {
         testPlan(cfg, expect => {
           for (const i of [1, 2]) {
             const f = `image${i}.svg`;
-            expect.addOp({ type: 'copy', from: [src, f], to: [target, 'img/' + f] });
+            expect.addOp({ type: 'copy', from: new LocalSrc(src, f), to: [target, 'img/' + f] });
             expect.addManifestEntryLocal(`image${i}Svg`, '/img/' + f)
           }
         });
@@ -160,7 +161,7 @@ describe('Plan', () => {
           for (const i of [1, 2]) {
             const fi = `image${i}.svg`;
             const fo = `${hashes[i-1]}.svg`;
-            expect.addOp({ type: 'copy', from: [src, fi], to: [target, fo] });
+            expect.addOp({ type: 'copy', from: new LocalSrc(src, fi), to: [target, fo] });
             expect.addManifestEntryLocal(`image${i}Svg`, '/' + fo)
           }
         });
@@ -250,7 +251,7 @@ describe('Plan', () => {
             optional: { vizJs },
           };
           testPlan(cfg, expect => {
-            expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
+            expect.addOp({ type: 'copy', from: new LocalSrc(src, 'vendor/viz.js'), to: [target, 'viz.js'] });
             expect.addManifestEntryLocal('vizJs', '/viz.js');
           });
         });
@@ -365,7 +366,7 @@ describe('Plan', () => {
         };
         testPlan(cfg, expect => {
           addSvgExpectations(expect);
-          expect.addOp({ type: 'copy', from: [src, 'vendor/viz.js'], to: [target, 'viz.js'] });
+          expect.addOp({ type: 'copy', from: new LocalSrc(src, 'vendor/viz.js'), to: [target, 'viz.js'] });
           expect.addManifestEntryLocal('vizJs', '/viz.js');
           expect.addManifestEntryLocal('n', '/n');
           expect.addManifestEntryLocal('l', '/l');
