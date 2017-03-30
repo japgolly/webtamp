@@ -23,6 +23,17 @@ const assertObject = (mandatoryKeys, optionalKeys = []) => o => {
 
 const asArray = v => v === undefined ? [] : flatten([v]);
 
+/** left-to-right function composition */
+const chain = fs => input => {
+  let a = input;
+  for (const f of fs)
+    a = f(a);
+  return a;
+}
+
+/** right-to-left function composition */
+const compose = fs => chain(fs.reverse());
+
 const fixRelativePath = s => s ? s.replace(/^(?:\.\/+)*\/*/g, '') : s;
 
 const flatten = array =>
@@ -67,6 +78,8 @@ class LocalSrc {
 module.exports = {
   assertObject,
   asArray,
+  chain,
+  compose,
   fixRelativePath,
   flatten,
   hashData,

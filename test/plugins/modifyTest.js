@@ -12,7 +12,7 @@ describe('Plugins.Modify', () => {
   describe('rename', () => {
 
     const makeCfg = o =>
-      Object.assign({}, { src, target, output: { name: 'copy-[basename]' } }, o);
+      Object.assign({}, { src, target, output: { dir: target, name: 'copy-[basename]', manifest: false } }, o);
 
     it("affects type: local", () => {
       const cfg = makeCfg({ assets: { hello: { type: 'local', files: 'hello.js' } } })

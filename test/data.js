@@ -27,7 +27,7 @@ const data = {
 
   src: Path.resolve(__dirname, 'data'),
   target: '/tmp/tool-thingy',
-  cfg: o => Object.assign({ src: data.src, output: { dir: data.target } }, o || {}),
+  cfg: o => Object.assign({ src: data.src, output: { dir: data.target, manifest: false } }, o || {}),
 };
 
 data.jqueryUrl = data.jqueryCdn.url;

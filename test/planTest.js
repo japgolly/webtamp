@@ -22,20 +22,18 @@ function addSvgExpectations(expect) {
 }
 
 // TODO warn about multiple files with same target name
+// TODO add manifest writing tests
 
 describe('Plan', () => {
   describe('run', () => {
 
     const testPlan = TestUtil.testPlan();
+    const makeCfg = TestData.cfg;
 
     describe('local', () => {
 
       it('simple', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
-          assets: { vizJs },
-        };
+        const cfg = makeCfg({ assets: { vizJs } });
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
@@ -47,11 +45,9 @@ describe('Plan', () => {
       });
 
       it('with src', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: { vizJs: { type: 'local', src: 'vendor', files: 'v?z.js', manifest: true } },
-        };
+        });
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
@@ -63,11 +59,9 @@ describe('Plan', () => {
       });
 
       it('no manifest', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: { vizJs: { type: 'local', files: 'vendor/v?z.js' } },
-        };
+        });
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
@@ -78,11 +72,9 @@ describe('Plan', () => {
       });
 
       it('manifest string', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: { vizJs: { type: 'local', files: 'vendor/v?z.js', manifest: 'omgJs' } },
-        };
+        });
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
@@ -94,22 +86,19 @@ describe('Plan', () => {
       });
 
       it('manifest: true in array = error', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: { vizJs: [vizJs] },
-        };
+        });
         testPlan(cfg, expect => {
           expect.addError('vizJs has {manifest: true} but requires an explicit name or function.')
         });
       });
 
       it('hashed filename', () => {
-        const cfg = {
-          src,
-          output: { dir: target, name: '[hash].[ext]' },
+        const cfg = makeCfg({
+          output: { dir: target, name: '[hash].[ext]', manifest: false },
           assets: { vizJs },
-        };
+        });
         testPlan(cfg, expect => {
           expect.addOp({
             type: 'copy',
@@ -121,24 +110,18 @@ describe('Plan', () => {
       });
 
       it('manifest fn', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: { svgs },
-        };
+        });
         testPlan(cfg, expect => {
           addSvgExpectations(expect);
         });
       });
 
       it('manifest fn and outputPath', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
-          assets: {
-            svgs: Object.assign({ outputPath: 'img' }, svgs)
-          },
-        };
+        const cfg = makeCfg({
+          assets: { svgs: Object.assign({ outputPath: 'img' }, svgs) }
+        });
         testPlan(cfg, expect => {
           for (const i of [1, 2]) {
             const f = `image${i}.svg`;
@@ -149,13 +132,9 @@ describe('Plan', () => {
       });
 
       it('manifest fn and outputName', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
-          assets: {
-            svgs: Object.assign({ outputName: '[hash].[ext]' }, svgs)
-          },
-        };
+        const cfg = makeCfg({
+          assets: { svgs: Object.assign({ outputName: '[hash].[ext]' }, svgs) }
+        });
         testPlan(cfg, expect => {
           const hashes = ['03f43b8f2e62bd8d9c3ccb8f9d8f8b26', '88ddfd89852406e3916e28a79407d564'];
           for (const i of [1, 2]) {
@@ -173,11 +152,7 @@ describe('Plan', () => {
       Object.freeze(valueB);
 
       it('manifest data not required', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
-          assets: { extA: valueA, extB: valueB },
-        };
+        const cfg = makeCfg({ assets: { extA: valueA, extB: valueB } });
         testPlan(cfg, expect => {
           okA(expect);
           okB(expect);
@@ -185,14 +160,12 @@ describe('Plan', () => {
       });
 
       it('{manifest: true} reads manifest name from asset name', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: {
             extA: Object.assign({ manifest: true }, valueA),
             extB: Object.assign({ manifest: true }, valueB),
-          },
-        };
+          }
+        });
         testPlan(cfg, expect => {
           okA(expect, "extA");
           okB(expect, "extB");
@@ -200,16 +173,14 @@ describe('Plan', () => {
       });
 
       it('explicit manifest names', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: {
             exts: [
               Object.assign({ manifest: 'extA' }, valueA),
               Object.assign({ manifest: 'extB' }, valueB),
             ],
           },
-        };
+        });
         testPlan(cfg, expect => {
           okA(expect, "extA");
           okB(expect, "extB");
@@ -227,12 +198,10 @@ describe('Plan', () => {
 
     describe('optional', () => {
       it('ignored when not referenced', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: {},
           optional: { vizJs },
-        };
+        });
         testPlan(cfg, expect => {});
       });
     });
@@ -244,12 +213,10 @@ describe('Plan', () => {
         ['same optional twice', ['vizJs', 'vizJs']],
       ].map(([testName, assetValue]) => {
         it('main → ' + testName, () => {
-          const cfg = {
-            src,
-            output: { dir: target },
+          const cfg = makeCfg({
             assets: { omg: assetValue },
             optional: { vizJs },
-          };
+          });
           testPlan(cfg, expect => {
             expect.addOp({ type: 'copy', from: new LocalSrc(src, 'vendor/viz.js'), to: [target, 'viz.js'] });
             expect.addManifestEntryLocal('vizJs', '/viz.js');
@@ -258,22 +225,18 @@ describe('Plan', () => {
       });
 
       it('cycle: self-reference', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: { omg: 'omg' },
-        };
+        });
         testPlan(cfg, expect => {
           expect.addError('Circular dependency on asset: omg');
         });
       });
 
       it('cycle: a↔b', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: { a: 'b', b: 'a' },
-        };
+        });
         testPlan(cfg, expect => {
           expect.addError('Circular dependency on asset: a');
         });
@@ -284,7 +247,7 @@ describe('Plan', () => {
       const url = jqueryUrl;
 
       const test = (def, expectFn) => {
-        const cfg = { src, output: { dir: target }, assets: { x: Object.assign({ type: 'cdn', manifest: true }, def) } };
+        const cfg = makeCfg({ assets: { x: Object.assign({ type: 'cdn', manifest: true }, def) } });
         testPlan(cfg, expectFn);
       };
 
@@ -344,9 +307,7 @@ describe('Plan', () => {
 
     describe('multi-feature', () => {
       it('example #1', () => {
-        const cfg = {
-          src,
-          output: { dir: target },
+        const cfg = makeCfg({
           assets: {
             a: 'b',
             m: [svgs, 'n', 'j'],
@@ -363,7 +324,7 @@ describe('Plan', () => {
             k: { type: 'cdn', url: jqueryUrl + '/k', integrity: image2SvgSha256 },
             l: [{ type: 'external', path: 'l', manifest: 'l' }],
           },
-        };
+        });
         testPlan(cfg, expect => {
           addSvgExpectations(expect);
           expect.addOp({ type: 'copy', from: new LocalSrc(src, 'vendor/viz.js'), to: [target, 'viz.js'] });

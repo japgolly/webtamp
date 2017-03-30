@@ -5,6 +5,7 @@ export default {
   output: {
     // dir: "target",
     // name: '[basename]', // NameTemplate
+    // manifest: 'manifest.json', // String
   },
 
   assets: {

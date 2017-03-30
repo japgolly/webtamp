@@ -5,7 +5,7 @@ const
   Path = require('path'),
   Util = require('util');
 
-const run = ({ ops, errors, warns, manifest }, { dryRun } = {}) => {
+const run = ({ ops, errors, warns }, { dryRun } = {}) => {
 
   warns.forEach(msg => console.warn(`[WARN] ${msg}`));
 
@@ -19,8 +19,7 @@ const run = ({ ops, errors, warns, manifest }, { dryRun } = {}) => {
       dryRun ? runnerLog : runnerPerform,
     ]);
 
-    ops.forEach(op => runner.op[op.type](op));
-    runner.manifest('manifest.json', JSON.stringify(manifest, null, '  '));
+    ops.forEach(op => runner[op.type](op));
 
     console.info(`\nWrote ${stats.files.toLocaleString()} files; ${stats.bytes.toLocaleString()} bytes.`);
     console.info(`${warns.length} warnings.`);
@@ -33,45 +32,32 @@ const recordStats = stats => {
   const add = n => k => stats[k] = stats[k] + n;
   const inc = add(1);
   return {
-    op: {
-      copy: op => {
-        inc('files');
-        add(op.from.size())('bytes');
-      },
-      write: op => {
-        inc('files');
-        add(op.content.length)('bytes');
-      },
+    copy: op => {
+      inc('files');
+      add(op.from.size())('bytes');
     },
-    manifest: (to, json) => {},
+    write: op => {
+      inc('files');
+      add(op.content.length)('bytes');
+    },
   };
 }
 
 const runnerLog = {
-  op: {
     copy: op => console.log(`Copy ${op.to[1]} ← ${op.from.abs}`),
     write: op => console.log(`Write ${op.to[1]} ← ${op.content.length} bytes`),
-  },
-  manifest: (to, json) => console.log(`\nWrite manifest to ${to}:\n${json}`)
 };
 
 const runnerPerform = {
-  op: {
     copy: op => {},
     write: op => {},
-  },
-  manifest: (to, json) => console.log(`\nWrite manifest to ${to}:\n${json}`)
 };
 
 const runnerAppend = runners => {
-  const mergeOp = k => op => runners.forEach(r => r.op[k](op));
-  const ops = {};
-  for (const k of Object.keys(runners[0].op))
-    ops[k] = mergeOp(k);
-  return {
-    op: ops,
-    manifest: (to, json) => runners.forEach(r => r.manifest(to, json)),
-  };
+  const result = {};
+  for (const k of Object.keys(runners[0]))
+    result[k] = op => runners.forEach(r => r[k](op));
+  return result;
 }
 
 module.exports = {

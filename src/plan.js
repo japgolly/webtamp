@@ -198,23 +198,25 @@ const planRef = ({ state }) => (name, refName) => {
   state.addDependency(name, refName);
 }
 
-function run(config) {
-  config.output = config.output || {};
+const parse = config => {
   const
     state = new State(),
-    src = Path.resolve(config.src || '.'),
-    target = Path.resolve(config.output.dir || 'target'),
-    outputNameFnDefaults = {},
-    mkOutputNameFn = f => OutputName.make(f, outputNameFnDefaults),
-    ctx = { state, src, target, mkOutputNameFn };
+    outputCfg = config.output || {},
+    src = Path.resolve(config.src || '.');
   if (!FS.existsSync(src))
     state.errors.push(`Src dir doesn't exist: ${src}`);
   if (!config.assets)
     state.errors.push('config.assets undefined.');
-
-  const outputNameFn = mkOutputNameFn(config.output.name || '[basename]');
+  if (!outputCfg.dir)
+    state.errors.push('config.output.dir undefined.');
 
   if (state.ok()) {
+    const
+      outputNameFnDefaults = {},
+      mkOutputNameFn = f => OutputName.make(f, outputNameFnDefaults),
+      outputNameFn = mkOutputNameFn(config.output.name || '[basename]'),
+      target = Path.resolve(config.output.dir),
+      ctx = { state, src, target, mkOutputNameFn };
 
     const cases = {
       string: _ => planRef(ctx),
@@ -247,17 +249,47 @@ function run(config) {
     // Graph dependencies
     state.resolvePending();
     state.graphDependencies();
-
-    // Plugins
-    for (const p of Utils.asArray(config.plugins)) {
-      if (state.ok() && p)
-        p(state);
-    }
   }
 
   return state;
 };
 
+const runPlugins = cfg => Utils.tap(state => {
+  if (state.ok())
+    for (const p of Utils.asArray(cfg.plugins))
+      if (state.ok() && p)
+        p(state);
+});
+
+const generateManifest = cfg => Utils.tap(state => {
+  if (state.ok()) {
+    const target = Path.resolve(cfg.output.dir);
+    const gen = filename => {
+      state.addOp({
+        type: 'write',
+        to: [target, filename],
+        content: JSON.stringify(state.manifest, null, '  '),
+      });
+    };
+    const m = cfg.output.manifest;
+    if (m === undefined || m === true)
+      gen('manifest.json');
+    else if (typeof m === 'string')
+      gen(m);
+    else if (m !== false)
+      state.addError(`Invalid value for config.output.manifest: ${JSON.stringify(m)}`);
+  }
+});
+
+const run = cfg =>
+  Utils.compose([
+    generateManifest(cfg),
+    runPlugins(cfg)
+  ])(parse(cfg));
+
 module.exports = {
-  run
+  parse,
+  runPlugins,
+  generateManifest,
+  run,
 };
