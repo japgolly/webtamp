@@ -1,7 +1,6 @@
 {
   "name": "webtamp",
   "version": "0.1.0",
-  "main": "src/main.js",
   "author": "David Barri <japgolly@gmail.com>",
   "repository": {
     "type": "git",
@@ -9,8 +8,11 @@
   },
   "homepage": "https://github.com/japgolly/webtamp",
   "license": "MIT",
+  "main": "src/main.js",
+  "bin": "src/cli.js",
   "dependencies": {
     "camelcase": "^4.0.0",
+    "commander": "^2.9.0",
     "glob": "^7.1.1",
     "mime-types": "^2.1.15",
     "posthtml": "^0.9.2"
@@ -19,7 +21,7 @@
     "chai": "^3.5.0",
     "mocha": "^3.2.0"
   },
-  "engines" : {
+  "engines": {
     "node": ">=7"
   },
   "scripts": {

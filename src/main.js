@@ -7,6 +7,7 @@ const
 function run(cfg, { dryRun = false } = {}) {
   const state = Plan.run(cfg);
   Action.run(state.results(), { dryRun });
+  return state;
 };
 
 module.exports = {
