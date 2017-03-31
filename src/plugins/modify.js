@@ -6,7 +6,7 @@ const
 
 // logic ::
 // State =>
-// { filename :: String, content :: () => String} =>
+// { originallyFrom: ?LocalSrc, filename :: String, content :: () => String} =>
 // ?{ ?newFilename :: String, ?newContent :: String }
 
 const assertResult = Utils.assertObject([], ['newFilename', 'newContent']);
@@ -15,7 +15,8 @@ const main = logic => state => {
   const modifyFn = logic(state);
 
   const attempt = (op, input) => {
-    const result = modifyFn(input);
+    const desc = input.originallyFrom ? input.originallyFrom.path : input.filename;
+    const result = state.scopeErrors(desc + ":", () => modifyFn(input));
     if (result) {
       assertResult(result);
 
@@ -27,17 +28,12 @@ const main = logic => state => {
       const newTo = op.to.withNewPath(newFilename);
       const filenameChanged = newFilename !== oldFilename;
 
-      const newOp =
-        (op.type === 'copy' && !contentChanged) ?
-        Object.assign({}, op, { to: newTo }) : //
-        {
-          type: 'write',
-          to: newTo,
-          content: newContent,
-        };
-
       state.removeOp(op);
-      state.ops.push(newOp);
+
+      if (op.type === 'copy' && !contentChanged)
+        state.ops.push(Object.assign({}, op, { to: newTo }));
+      else
+        state.addOpWrite(newTo, newContent, input.originallyFrom);
 
       if (filenameChanged)
         renameLocal(state, oldFilename, newFilename);
@@ -66,13 +62,15 @@ const main = logic => state => {
 
   for (const op of state.ops) {
     if (op.type === 'copy') {
+      const originallyFrom = op.from;
       const filename = op.to.path;
       const content = () => op.from.content().toString();
-      attempt(op, { filename, content })
+      attempt(op, { originallyFrom, filename, content })
     } else if (op.type === 'write') {
+      const originallyFrom = op.originallyFrom;
       const filename = op.to.path;
       const content = () => op.content;
-      attempt(op, { filename, content })
+      attempt(op, { originallyFrom, filename, content })
     }
   }
 };

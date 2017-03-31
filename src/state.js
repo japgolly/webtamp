@@ -22,13 +22,14 @@ class State {
     this.addOp({
       type: 'copy',
       from,
-      to: new OutputFile(this.target, to),
+      to: (to instanceof OutputFile) ? to : new OutputFile(this.target, to),
     })
   }
-  addOpWrite(to, content) {
+  addOpWrite(to, content, originallyFrom) {
     this.addOp({
       type: 'write',
-      to: new OutputFile(this.target, to),
+      originallyFrom,
+      to: (to instanceof OutputFile) ? to : new OutputFile(this.target, to),
       content,
     })
   }
@@ -43,6 +44,19 @@ class State {
     assertObject(['url'], ['integrity', 'crossorigin'])(url)
     if (!this.urls[assetName]) this.urls[assetName] = [];
     this.urls[assetName].push(url);
+  }
+
+  scopeErrors(mod, block) {
+    if (mod === '' || !mod) return block();
+    const e = this.errors.length;
+    const r = block();
+    let i = this.errors.length;
+    let f = mod;
+    if (typeof mod === 'string')
+      f = e => `${mod} ${e}`;
+    while (--i >= e)
+      this.errors[i] = f(this.errors[i]);
+    return r;
   }
 
   removeOp(op) {

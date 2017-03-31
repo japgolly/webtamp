@@ -28,6 +28,7 @@ const simplifyOp = ({
   }),
   write: tap(op => {
     const t = op.to;
+    delete op.originallyFrom;
     op.to = [t.ctx, t.path];
   }),
 });

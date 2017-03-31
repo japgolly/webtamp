@@ -44,7 +44,7 @@ function testError(expectedErrors, cfg, cfgMod) {
   const c = prepPage1(cfg);
   if (cfgMod) cfgMod(c);
   const state = Plan.run(c);
-  Assert.deepEqual(state.errors, Utils.asArray(expectedErrors));
+  Assert.deepEqual(state.errors, Utils.asArray(expectedErrors).map(e => `page1.html: ${e}`));
 }
 
 describe('Plugins.Html', () => {
