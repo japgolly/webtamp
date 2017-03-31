@@ -55,9 +55,11 @@ It does all the things I need to do for my webapp's assets, after I've used webp
      },
 
      assets: {
+       // mandatory assets go here
      },
 
      optional: {
+       // optional assets go here
      },
 
      plugins: [
@@ -81,10 +83,11 @@ It does all the things I need to do for my webapp's assets, after I've used webp
     ./node_modules/.bin/webtamp [--config <file>] --dryrun
     ```
 
-
 # Examples
 
+TODO
 
+# Legal
 
 ```
 Copyright 2017 David Barri

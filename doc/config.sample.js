@@ -1,47 +1,136 @@
 export default {
 
-  // src: ".",
+  // [Optional] Directory from which all assets paths are relative.
+  // Default = "."
+  src: ".",
 
   output: {
-    // dir: "target",
-    // name: '[basename]', // NameTemplate
-    // manifest: 'manifest.json', // Bool | String
+
+    // [Mandatory] Directory in which all webtamp output is written.
+    dir: "dist",
+
+    // [Optional] The filename template for all output.
+    //
+    // Replaces tokens:
+    // * [name]     - The filename without path and without file extension.
+    // * [ext]      - The file extension.
+    // * [basename] - The file basename, equivalent to [name].[ext]
+    // * [path]     - The path relative to the src directory.
+    // * [hash]     - A hash of the file content (using the default hash algorithm).
+    //                You can also specify a specific algorithm like [sha256], [md5], etc.
+    // * [hash:n]   - As above but truncated to n chars.
+    //
+    // Default = "[basename]"
+    name: '[basename]',
+
+    // [Optional]
+    // True   - Write the manifest to manifest.json.
+    // False  - Don't create a manifest file.
+    // String - Write the manifest to this filename.
+    //
+    // Default = true
+    manifest: true,
   },
 
+  // Mandatory assets
+  //
+  // An object where the:
+  // * keys are the names (ids) of the asset(s). Used to require other assets.
+  // * values are the asset value(s) which can be:
+  //   * String                - Requires another asset as a dependency.
+  //   * Object[type=local]    - Zero or more local files. These will be copied to config.output.dir when required.
+  //   * Object[type=cdn]      - A CDN-hosted asset.
+  //   * Object[type=external] - A path that will be served by your server, that you want to trust to exist.
+  //   * Array                 - A collection of the above.
   assets: {
 
-    name: {
+    // Example of type=local
+    localExample: {
       type: 'local',
+
+      // [Mandatory] Local files to glob.
       files: 'images/**/*.{png,jpg}',
-      // manifest: false,       // Bool | Path => Maybe ManifestName
-      // src: undefined,        // String
-      // outputPath: undefined, // String
-      // outputName: undefined, // NameTemplate
+
+      // [Optional]
+      // Bool           - Whether to include these files in the manifest.
+      // Path => String - Function that takes an asset path+filename and if it is desirable to
+      //                - include it in the manifest, returns a manifest name.
+      //
+      // Default = false
+      manifest: false,
+
+      // [Optional] Directory from which the files glob is relative.
+      // If unspecified, the root config.src value is used.
+      //
+      // Default = undefined = config.src
+      src: undefined,
+
+      // [Optional] Specify a sub-directory in the output directory in which to copy assets.
+      //
+      // Default = undefined = "/"
+      outputPath: undefined,
+
+      // [Optional] Override the filename template from config.output.name
+      //
+      // Default = undefined = config.output.name
+      outputName: undefined,
     }
 
-    name: {
-      type: 'external',
-      path: 'whatever.js',
-      // manifest: false,       // Bool | Path => Maybe ManifestName
-    },
-
-    name: {
+    // Example of type=cdn
+    cdnExample: {
       type: 'cdn',
+
+      // [Mandatory] The asset URL
       url: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js',
-      // integrity: 'sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=',
-      // integrity: {
-      //   files: 'node_modules/jquery/dist/jquery.min.js', // Pattern | Array Pattern
-      //   algo: 'sha256', // String | Array String
-      // },
-      // crossorigin: "anonymous",
-      // manifest: false,       // Bool | Url => Maybe ManifestName
+
+      // [Optional] Specify the link integrity attribute. (SRI)
+      // Default = undefined
+      //
+      // Example: A trusted value to use.
+      integrity: 'sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=',
+      // Example: Calculate the integrity using trusted, local files.
+      integrity: {
+        files: 'node_modules/jquery/dist/jquery*.js', // A glob pattern (multiple files are legal)
+        algo: 'sha256', // String | Array String - hash algorithms to use (multiple files are legal)
+      },
+
+      // [Optional]
+      // Bool             - Whether to include this in the manifest.
+      // String => String - Function that takes the URL if it is desirable to include it in the manifest,
+      //                    returns a manifest name.
+      //
+      // Default = false
+      manifest: false,
     },
 
-    name: "asset name",
+    // Example of type=external
+    externalExample: {
+      type: 'external',
 
-    name: [any value types used above],
+      // [Mandatory] The asset path relative to your server root
+      path: '/stats.json?time=1d',
+
+      // [Optional]
+      // Bool             - Whether to include this in the manifest.
+      // String => String - Function that takes the path above if it is desirable to include it in the manifest,
+      //                    returns a manifest name.
+      //
+      // Default = false
+      manifest: false,
+    },
+
+    // You can create new assets that simply depend on another. Effectively an alias.
+    aliasExample: "cdnExample",
+
+    // You can merge any of the above into an array to make a bundle.
+    bundleExample: [
+      {type: 'local', files: 'robot.txt'},
+      'aliasExample',
+      'localExample',
+    ],
   },
 
+  // Optional assets
   optional: {
     // same as 'assets' above
   },
