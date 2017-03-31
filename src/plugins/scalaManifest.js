@@ -1,10 +1,12 @@
+const Path = require('path');
+
 const term = n =>
   /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(n) ? n : "`" + n + "`";
 
 const stringLiteral = s =>
   /["\n\r\t\\]/.test(s) ? `"""${s}"""` : `"${s}"`;
 
-const plugin = ({ object, filename, nameMod = n => n }) => state => {
+const plugin = ({ object, filename, outputPath, nameMod = n => n }) => state => {
 
   const fqcn = object.match(/^(.+)\.([^.]+)$/);
   if (!fqcn) {
@@ -42,7 +44,11 @@ const plugin = ({ object, filename, nameMod = n => n }) => state => {
     // console.log(content);
     // console.log("-------------------------------------------------------------------------")
 
-    state.addOpWrite(filename || `${obj}.scala`, content);
+    let outfile = filename || `${obj}.scala`;
+    if (outputPath)
+      outfile = Path.join(outputPath, outfile);
+
+    state.addOpWrite(outfile, content);
   }
 };
 
