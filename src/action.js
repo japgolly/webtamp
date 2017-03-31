@@ -89,7 +89,7 @@ const runnerPerform = errors => ({
   write: op => {
     const to = op.to.abs;
     try {
-      fs.writeFileSync(to, op.content);
+      fs.outputFileSync(to, op.content);
     } catch (err) {
       errors.push(`Error creating ${fmtPath(to)}: ${err}`);
     }
