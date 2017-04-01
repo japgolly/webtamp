@@ -79,12 +79,13 @@ describe('Plugins.Html', () => {
     it('loads dependencies in order', () => {
       const cfg = {
         assets: {
-          chosen: ['a', { type: 'local', files: 'hello.js' }, 'c'],
+          chosen: ['d', { type: 'local', files: 'hello.js' }, 'c'],
         },
         optional: {
           a: ['z', { type: 'external', path: '/a.css', manifest: 'a_css' }],
           b: { type: 'external', path: '/b.js' },
           c: [{ type: 'external', path: '/c.js', manifest: 'c_js' }, 'b', 'z'],
+          d: ['a'],
           z: { type: 'external', path: '/z.js' },
         },
       };

@@ -40,9 +40,11 @@ class State {
   addWarn(o) {
     this.warns.push(o)
   }
+
   addUrl(assetName, url) {
-    assertObject(['url'], ['integrity', 'crossorigin'])(url)
-    if (!this.urls[assetName]) this.urls[assetName] = [];
+    assertObject(['url'], ['integrity', 'crossorigin'])(url);
+    if (!this.urls[assetName])
+      this.addError(`Asset not registered: ${assetName}`);
     this.urls[assetName].push(url);
   }
 
@@ -90,8 +92,10 @@ class State {
   registerNow(name) {
     if (this.pending[name])
       this.addError(`Duplicate asset: ${name}`);
-    else if (!this.deps[name])
+    else if (!this.deps[name]) {
       this.deps[name] = [];
+      this.urls[name] = [];
+    }
   }
 
   registerForLater(name, register) {

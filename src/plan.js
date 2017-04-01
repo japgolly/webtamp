@@ -206,6 +206,7 @@ const planExternal =
   })
 
 const planRef = ({ state }) => (name, refName) => {
+  state.registerNow(name);
   state.addDependency(name, refName);
 }
 
