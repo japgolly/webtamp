@@ -79,7 +79,7 @@ const arityAwareManifestName = (state, subname, inArray, name, manifest, fnArg, 
  */
 const planLocal =
   ({ state, mkOutputNameFn }, outputNameFn0) => inArray => (name, value) => {
-    const { files, outputName, outputPath, manifest } = value;
+    const { files, outputName, outputPath, manifest, validate } = value;
     state.checkThenRunIfNoErrors(() => {
       if (!files)
         state.addError(`${name} missing key: files`);
@@ -88,9 +88,22 @@ const planLocal =
     }, () => {
       const src = value.src ? Path.resolve(state.src, value.src) : state.src;
       const fs = Glob.sync(files, { cwd: src, nodir: true }).sort();
-      if (fs.length == 0)
-        state.addWarn(`${name} file(s) not found: ${files}`);
-      else {
+
+      // Validate
+      let validateFn =
+        typeof validate === 'function' ? validate :
+        typeof validate === 'string' ? _ => validate :
+        typeof validate === 'boolean' ? _ => [] :
+        typeof validate === 'undefined' ? defaultLocalFileValidation :
+        null; // lol do more lazy!
+
+      const validationErrors = Utils.asArray(validateFn(fs, files, src)).filter(e => e && e !== true);
+      if (validationErrors.length > 0) {
+        const descSrc = value.src ? value.src + '/' : '';
+        const desc = `${name}:${descSrc}${files}`;
+        validationErrors.forEach(e => state.addError(`${desc} - ${e}`));
+
+      } else {
         const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
         state.registerNow(name);
 
@@ -121,6 +134,10 @@ const planLocal =
       }
     })
   };
+
+const defaultLocalFileValidation = (fs, glob, src) =>
+  fs.length === 0 && `0 files found.`;
+// fs.length === 0 && `0 files found. (Add {validate: false} to disable this check.)`;
 
 const planCdn =
   ({ state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity, manifest }) =>

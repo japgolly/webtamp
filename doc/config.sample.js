@@ -74,6 +74,19 @@ export default {
       //
       // Default = undefined = config.output.name
       outputName: undefined,
+
+      // [Optional] Validate the glob results.
+      //
+      // The main format is a function that takes an array of matched files and returns
+      // an erorr msg (or array of error msgs) if anything is wrong.
+      // (files :: Array, glob :: String, srcDir :: String) => String | Array String | something falsy
+      //
+      // Other acceptable values are:
+      // Bool           - No validation/errors. Any results pass.
+      // String         - Always fail with given error.
+      //
+      // Default = fail when 0 files found
+      validate: false,
     }
 
     // Example of type=cdn

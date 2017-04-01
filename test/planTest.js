@@ -69,7 +69,7 @@ describe('Plan', () => {
         });
       });
 
-      it('manifest: true in array = error', () => {
+      it('error when {manifest: true} in array', () => {
         const cfg = makeCfg({
           assets: { vizJs: [vizJs] },
         });
@@ -124,6 +124,36 @@ describe('Plan', () => {
             expect.addManifestEntryLocal(`image${i}Svg`, '/' + fo)
           }
         });
+      });
+
+      it('error if no files found (by default)', () => {
+        const cfg = makeCfg({
+          assets: { blah: { type: 'local', files: '**/*.blah' } },
+        });
+        testPlan(cfg, expect => {
+          expect.addError('blah:**/*.blah - 0 files found.');
+        });
+      });
+
+      it('error using custom validate', () => {
+        const cfg = makeCfg({
+          assets: {
+            blah1: { type: 'local', files: '*.svg', validate: _ => 'nah mate' },
+            blah2: { type: 'local', files: '*.ico', validate: _ => ['oi', 'nope'] },
+          },
+        });
+        testPlan(cfg, expect => {
+          expect.addError(`blah1:*.svg - nah mate`);
+          expect.addError(`blah2:*.ico - oi`);
+          expect.addError(`blah2:*.ico - nope`);
+        });
+      });
+
+      it('disable validation', () => {
+        const cfg = makeCfg({
+          assets: { blah: { type: 'local', files: '**/*.blah', validate: false } },
+        });
+        testPlan(cfg, expect => {});
       });
     });
 
