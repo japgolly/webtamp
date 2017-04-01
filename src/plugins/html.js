@@ -11,10 +11,9 @@ const
 
 const isHtmlFile = i => /\.html$/.test(i.filename);
 
-const plugin = ({ test = isHtmlFile } = {}) => {
+const replacementPlugin = ({ test = isHtmlFile } = {}) => {
   return ModifyPlugin.stateful(state => {
     const transform = transformer(state);
-
     return i => {
       if (test(i)) {
         const newContent = PostHtml(transform).process(i.content(), { sync: true }).html
@@ -86,4 +85,6 @@ const tagToLoadUrl = o => {
   }
 }
 
-module.exports = plugin;
+module.exports = {
+  replace: replacementPlugin,
+};
