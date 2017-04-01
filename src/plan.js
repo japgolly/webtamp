@@ -79,7 +79,7 @@ const arityAwareManifestName = (state, subname, inArray, name, manifest, fnArg, 
  */
 const planLocal =
   ({ state, mkOutputNameFn }, outputNameFn0) => inArray => (name, value) => {
-    const { files, outputName, outputPath, manifest, validate } = value;
+    const { files, outputName, outputPath, manifest, validate, transitive } = value;
     state.checkThenRunIfNoErrors(() => {
       if (!files)
         state.addError(`${name} missing key: files`);
@@ -104,7 +104,10 @@ const planLocal =
         validationErrors.forEach(e => state.addError(`${desc} - ${e}`));
 
       } else {
-        const outputNameFn = outputName ? mkOutputNameFn(outputName) : outputNameFn0;
+        const outputNameFn =
+          transitive ? mkOutputNameFn("[path]/[basename]") :
+          outputName ? mkOutputNameFn(outputName) :
+          outputNameFn0;
         state.registerNow(name);
 
         // Add each local file
@@ -117,10 +120,13 @@ const planLocal =
           newName = newName.replace(/^\.\//g, '');
 
           // Copy file
-          state.addOpCopy(new LocalSrc(src, f), newName);
+          state.addOpCopy(new LocalSrc(src, f), newName, transitive);
 
           const url = '/' + newName;
-          state.addUrl(name, { url });
+          const urlEntry = { url };
+          if (transitive !== undefined)
+            urlEntry.transitive = transitive;
+          state.addUrl(name, urlEntry);
 
           // Add to manifest
           const whenTrue = () => {

@@ -62,15 +62,17 @@ const main = logic => state => {
 
   for (const op of state.ops) {
     if (op.type === 'copy') {
-      const originallyFrom = op.from;
-      const filename = op.to.path;
-      const content = () => op.from.content().toString();
-      attempt(op, { originallyFrom, filename, content })
+      if (!op.transitive) {
+        const originallyFrom = op.from;
+        const filename = op.to.path;
+        const content = () => op.from.content().toString();
+        attempt(op, { originallyFrom, filename, content });
+      }
     } else if (op.type === 'write') {
       const originallyFrom = op.originallyFrom;
       const filename = op.to.path;
       const content = () => op.content;
-      attempt(op, { originallyFrom, filename, content })
+      attempt(op, { originallyFrom, filename, content });
     }
   }
 };

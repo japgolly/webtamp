@@ -75,6 +75,17 @@ export default {
       // Default = undefined = config.output.name
       outputName: undefined,
 
+      // [Optional] Whether these files are transitive dependencies of something else.
+      // These are typically fonts and images used by a 3rd-party non-modular library.
+      //
+      // Transitive dependencies:
+      // * have outputName of "[path]/[basename]"
+      // * are not modified or renamed by plugins
+      // * are not loaded directly (i.e. the HTML.replace plugin will not insert tags to load these assets).
+      //
+      // Default = false
+      transitive: false,
+
       // [Optional] Validate the glob results.
       //
       // The main format is a function that takes an array of matched files and returns

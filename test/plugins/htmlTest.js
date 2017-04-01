@@ -136,6 +136,18 @@ describe('Plugins.Html.replace', () => {
       const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
       testError("Don't know what kind of HTML tag is needed to load: /out-hello.js.what", cfg);
     });
+
+    it('ignores transitive dependencies', () => {
+      const cfg = {
+        assets: {
+          v: { type: 'local', files: 'vendor/v?z.js', transitive: true },
+          h: { type: 'local', files: 'hello.js' },
+          chosen: ['v', 'h'],
+        }
+      };
+      const exp = '<script src="/out-hello.js"></script>'
+      testPage1(cfg, exp)
+    });
   });
 
   describe("minify", () => {

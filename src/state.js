@@ -18,11 +18,12 @@ class State {
   addOp(o) {
     this.ops.push(o)
   }
-  addOpCopy(from, to) {
+  addOpCopy(from, to, transitive) {
     this.addOp({
       type: 'copy',
       from,
       to: (to instanceof OutputFile) ? to : new OutputFile(this.target, to),
+      transitive,
     })
   }
   addOpWrite(to, content, originallyFrom) {
@@ -42,7 +43,7 @@ class State {
   }
 
   addUrl(assetName, url) {
-    assertObject(['url'], ['integrity', 'crossorigin'])(url);
+    assertObject(['url'], ['integrity', 'crossorigin', 'transitive'])(url);
     if (!this.urls[assetName])
       this.addError(`Asset not registered: ${assetName}`);
     this.urls[assetName].push(url);

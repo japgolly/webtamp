@@ -42,13 +42,14 @@ const transformer = state => tree => {
           Object.keys(state.graph[name]).forEach(addAsset);
 
           // Add named
-          for (const urlEntry of state.urls[name]) {
-            const tag = tagToLoadUrl(urlEntry);
-            if (tag)
-              links.push(tag);
-            else
-              state.addError("Don't know what kind of HTML tag is needed to load: " + urlEntry.url);
-          }
+          for (const urlEntry of state.urls[name])
+            if (!urlEntry.transitive) {
+              const tag = tagToLoadUrl(urlEntry);
+              if (tag)
+                links.push(tag);
+              else
+                state.addError("Don't know what kind of HTML tag is needed to load: " + urlEntry.url);
+            }
         }
       };
 

@@ -59,5 +59,14 @@ describe('Plugins.Modify', () => {
       Assert.deepEqual(state.manifest, { wow: { local: '/thing.js' } });
     });
 
+    it("ignores transitive assets", () => {
+      const cfg = makeCfg({ assets: { hello: { type: 'local', files: 'hello.js', transitive: true } } })
+      cfg.plugins = [Plugins.Modify.rename(/hello/, _ => "nope")];
+      const state = Plan.run(cfg);
+      Assert.deepEqual(state.errors, []);
+      Assert.deepEqual(state.urls, { hello: [{ url: '/hello.js', transitive: true }] });
+      Assert.deepEqual(state.manifest, {});
+    });
+
   });
 });
