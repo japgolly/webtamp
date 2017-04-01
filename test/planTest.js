@@ -21,7 +21,6 @@ function addSvgExpectations(expect) {
   }
 }
 
-// TODO warn about multiple files with same target name
 // TODO add manifest writing tests
 
 describe('Plan', () => {
@@ -154,6 +153,20 @@ describe('Plan', () => {
           assets: { blah: { type: 'local', files: '**/*.blah', validate: false } },
         });
         testPlan(cfg, expect => {});
+      });
+
+      it('error when multiple assets write to same dest', () => {
+        const cfg = makeCfg({
+          assets: {
+            a: { type: 'local', files: 'image1.svg', outputName: 'x' },
+            b: { type: 'local', files: 'image2.svg', outputName: 'x' },
+          },
+        });
+        testPlan(cfg, expect => {
+          expect.addOpCopy(new LocalSrc(src, 'image1.svg'), 'x');
+          expect.addOpCopy(new LocalSrc(src, 'image2.svg'), 'x');
+          expect.addError("Multiple assets write to the same target: x");
+        });
       });
     });
 

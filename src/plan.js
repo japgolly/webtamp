@@ -288,8 +288,26 @@ const generateManifest = cfg => Utils.tap(state => {
   }
 });
 
+const ensureNoDuplicateTargets = Utils.tap(state => {
+  const targetIndex = {};
+  const getTarget = {
+    copy: op => op.to.abs,
+    write: op => op.to.abs,
+  };
+  state.ops.forEach(op => {
+    const t = getTarget[op.type](op);
+    if (!targetIndex[t]) targetIndex[t] = [];
+    targetIndex[t].push(op);
+  });
+  Object.entries(targetIndex).forEach(([t, ops]) => {
+    if (ops.length !== 1)
+      state.addError(`Multiple assets write to the same target: ${Path.relative(state.target, t)}`);
+  });
+});
+
 const run = cfg =>
   Utils.compose([
+    ensureNoDuplicateTargets,
     generateManifest(cfg),
     runPlugins(cfg)
   ])(parse(cfg));
