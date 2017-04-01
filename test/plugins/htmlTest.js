@@ -23,11 +23,14 @@ function prepPage1(cfg) {
   return c;
 }
 
-function testPage1(cfg, expectedReplacement, { expectMod = e => e } = {}) {
+function testPage1(cfg, expectedReplacement, { expectMod = e => e, replace = true } = {}) {
   const state = Plan.run(prepPage1(cfg));
   Assert.deepEqual(state.errors, []);
   const to = 'out-page1.html';
-  const expect = expectMod(page1Content).replace(requireTag, expectedReplacement);
+  let expect = page1Content;
+  if (replace)
+    expect = expect.replace(requireTag, expectedReplacement);
+  expect = expectMod(expect);
   const norm = i => {
     const o = Object.assign({}, i);
     o.content = o.content.split("\n")
@@ -47,10 +50,10 @@ function testError(expectedErrors, cfg, cfgMod) {
   Assert.deepEqual(state.errors, Utils.asArray(expectedErrors).map(e => `page1.html: ${e}`));
 }
 
+const choseLocal = o => Object.assign({}, { assets: { chosen: { type: 'local', files: 'hello.js' } } }, o || {});
+
 describe('Plugins.Html.replace', () => {
   describe('<require>', () => {
-
-    const choseLocal = o => Object.assign({}, { assets: { chosen: { type: 'local', files: 'hello.js' } } }, o || {});
 
     it('link to JS: local', () => {
       const cfg = choseLocal();
@@ -101,7 +104,7 @@ describe('Plugins.Html.replace', () => {
 
     it('works on "write" ops', () => {
       const modStr = s => s.replace(/Page 1/g, 'PAGE ONE!!!');
-      const modPlugin = Plugins.Modify.searchReplace(/\.html$/, modStr);
+      const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
       const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
       const exp = '<script src="/out-hello.js"></script>'
       testPage1(cfg, exp, { expectMod: modStr })
@@ -109,14 +112,14 @@ describe('Plugins.Html.replace', () => {
 
     it('error when asset attribute missing', () => {
       const modStr = s => s.replace(' asset="chosen"', '');
-      const modPlugin = Plugins.Modify.searchReplace(/\.html$/, modStr);
+      const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
       const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
       testError("<require/> tag needs an 'asset' attribute.", cfg);
     });
 
     it('error when invalid asset name', () => {
       const modStr = s => s.replace('chosen', 'nope');
-      const modPlugin = Plugins.Modify.searchReplace(/\.html$/, modStr);
+      const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
       const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
       testError("Asset referenced in <require/> not found: nope", cfg);
     });
@@ -135,6 +138,19 @@ describe('Plugins.Html.replace', () => {
     });
   });
 
+  describe("minify", () => {
+    const minify = Plugins.Html.minify({ options: { removeComments: true, collapseWhitespace: true } });
+    const expMin = e => e.replace(/\n\s*|<!-- Why hello there -->/g, '').replace('sen" /', 'sen"');
+    it("minifies HTML", () => {
+      const cfg = { assets: {}, plugins: [minify] };
+      testPage1(cfg, null, { expectMod: expMin, replace: false });
+    });
+    it("minifies after repalcement", () => {
+      const cfg = choseLocal({ plugins: [Plugins.Html.replace(), minify] });
+      const exp = '<script src="/out-hello.js"></script>'
+      testPage1(cfg, exp, { expectMod: expMin });
+    });
+  });
   // TODO favicon
 
 });

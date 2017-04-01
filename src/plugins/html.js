@@ -3,8 +3,9 @@
 const
   Entities = require("entities"),
   FS = require('fs'),
+  HtmlMinifier = require('html-minifier'),
   Mime = require('mime-types'),
-  ModifyPlugin = require('./modify'),
+  Modify = require('./modify'),
   Path = require('path'),
   PostHtml = require('posthtml'),
   Utils = require('../utils');
@@ -12,7 +13,7 @@ const
 const isHtmlFile = i => /\.html$/.test(i.filename);
 
 const replacementPlugin = ({ test = isHtmlFile } = {}) => {
-  return ModifyPlugin.stateful(state => {
+  return Modify.stateful(state => {
     const transform = transformer(state);
     return i => {
       if (test(i)) {
@@ -85,6 +86,11 @@ const tagToLoadUrl = o => {
   }
 }
 
+const minifyPlugin = ({ test = isHtmlFile, options = {} } = {}) =>
+  Modify.content(/\.html$/, html =>
+    HtmlMinifier.minify(html, options))
+
 module.exports = {
+  minify: minifyPlugin,
   replace: replacementPlugin,
 };

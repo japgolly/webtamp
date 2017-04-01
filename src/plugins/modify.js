@@ -82,9 +82,9 @@ const widenFilenameTest = t => {
   return i => test(i.filename);
 }
 
-const searchReplace = (testFilename, modifyContent) => {
+const modifyContent = (testFilename, modify) => {
   const test = widenFilenameTest(testFilename);
-  return stateless(i => test(i) && { newContent: modifyContent(i.content()) });
+  return stateless(i => test(i) && { newContent: modify(i.content()) });
 }
 
 const rename = (testFilename, modifyFilename) => {
@@ -93,8 +93,8 @@ const rename = (testFilename, modifyFilename) => {
 }
 
 module.exports = {
+  content: modifyContent,
   rename,
   stateful: main,
   stateless,
-  searchReplace,
 };
