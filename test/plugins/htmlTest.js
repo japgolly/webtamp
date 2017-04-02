@@ -15,17 +15,19 @@ const { src, target, jqueryCdn, bootstrapCssCdn } = TestData;
 
 const page1Content = FS.readFileSync(src + "/page1.html").toString();
 const page2Content = FS.readFileSync(src + "/page2.html").toString();
+const page3Content = FS.readFileSync(src + "/page3.html").toString();
 const requireTag = '<require asset="chosen" />';
 
 const prepPage = n => cfg => {
   const c = TestData.cfg(cfg);
   c.output.name = 'out-[basename]';
-  c.assets.page1 = { type: 'local', files: `page${n}.html` };
+  c.assets.test = { type: 'local', files: `page${n}.html` };
   if (!c.plugins) c.plugins = [Plugins.Html.replace()];
   return c;
 }
 const prepPage1 = prepPage(1);
 const prepPage2 = prepPage(2);
+const prepPage3 = prepPage(3);
 
 const testPage = (cfg, expectedContent, to) => {
   const state = Plan.run(cfg);
@@ -65,7 +67,7 @@ const choseLocal = o => Object.assign({}, { assets: { chosen: { type: 'local', f
 
 describe('Plugins.Html', () => {
   describe('replace', () => {
-    describe('<require>', () => {
+    describe('<require asset="…" />', () => {
 
       it('link to JS: local', () => {
         const cfg = choseLocal();
@@ -159,6 +161,18 @@ describe('Plugins.Html', () => {
         };
         const exp = '<script src="/out-hello.js"></script>'
         testPage1(cfg, exp)
+      });
+
+      describe('<require manifest="…" />', () => {
+
+        it('link to JS: local', () => {
+          const cfg = { assets: { x: { type: 'local', files: 'hello.js', manifest: 'chooseMe' } } };
+          const exp = '<script src="/out-hello.js"></script>';
+          const expect = page3Content.replace('<require manifest="chooseMe" />', exp);
+          testPage(prepPage3(cfg), expect, 'out-page3.html');
+        });
+
+        // TODO Test other types (CDN loses its integrity due to State.manifestUrl)
       });
 
       describe("webtamp: //manifest:", () => {

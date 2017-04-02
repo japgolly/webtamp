@@ -32,10 +32,18 @@ const replacementPlugin = ({ test = isHtmlFile } = {}) => {
 
 const transformRequireTag = state => tree => {
   tree.match({ tag: 'require' }, node => {
-    const assetName = node.attrs && node.attrs.asset;
-    if (!assetName)
-      state.addError("<require/> tag needs an 'asset' attribute.");
-    else {
+    const attrs = node.attrs || {};
+    const assetName = attrs.asset;
+    const manifestName = attrs.manifest;
+
+    // Validate attribute count
+    if (attrs.length === 0)
+      state.addError(`<require/> missing attributes.`);
+    else if (attrs.length > 1)
+      state.addError(`Multiple attributes specified in <require/>: ${attrs}`);
+
+    // asset="..."
+    else if (assetName) {
       const links = [];
       const seen = new Set();
       const addAsset = name => {
@@ -50,26 +58,35 @@ const transformRequireTag = state => tree => {
           // Add named
           for (const urlEntry of state.urls[name])
             if (!urlEntry.transitive) {
-              const tag = tagToLoadUrl(urlEntry);
-              if (tag)
-                links.push(tag);
-              else
-                state.addError("Don't know what kind of HTML tag is needed to load: " + urlEntry.url);
+              withTagForUrlEntry(state, urlEntry, tag => links.push(tag));
             }
         }
       };
 
       addAsset(assetName);
-      // return { tag: false, content: content };
       node.tag = false;
       node.content = [links.join("\n")].concat(node.content);
-      return node;
     }
+
+    // manifest="..."
+    else if (manifestName) {
+      const links = [];
+      withManifestUrl(state, manifestName, url =>
+        withTagForUrlEntry(state, { url }, tag => links.push(tag)));
+      node.tag = false;
+      node.content = [links.join("\n")].concat(node.content);
+    }
+
+    // <require ??? />
+    else
+      state.addError("<require/> tag needs an 'asset' attribute.");
+
+    return node;
   });
   return tree;
 };
 
-const tagToLoadUrl = o => {
+const tagForUrlEntry = o => {
   const attrArray = [];
   const add = (k, vv) => {
     const v = vv || o[k];
@@ -93,6 +110,14 @@ const tagToLoadUrl = o => {
   }
 }
 
+const withTagForUrlEntry = (state, urlEntry, use) => {
+  const tag = tagForUrlEntry(urlEntry);
+  if (tag)
+    return use(tag);
+  else
+    state.addError("Don't know what kind of HTML tag is needed to load: " + urlEntry.url);
+};
+
 const webtampUrl = /^webtamp:\/\/(.*)$/;
 const webtampManifestPath = /manifest\/(.*)$/;
 const transformWebtampUrls = state => tree => {
@@ -106,16 +131,7 @@ const transformWebtampUrls = state => tree => {
         // Manifest URLs
         if (m = path.match(webtampManifestPath)) {
           const name = m[1];
-          const entry = state.manifest[name];
-          if (entry === undefined)
-            state.addError(`Manifest entry not found: ${name}`);
-          else {
-            const url = State.manifestUrl(entry, true);
-            if (url)
-              node.attrs[attr] = url;
-            else
-              state.addError(`URL for manifest entry unknown: ${attrValue}`);
-          }
+          withManifestUrl(state, name, url => node.attrs[attr] = url);
         }
 
         // Invalid URL type
@@ -128,6 +144,19 @@ const transformWebtampUrls = state => tree => {
   });
   return tree;
 };
+
+const withManifestUrl = (state, name, use) => {
+  const entry = state.manifest[name];
+  if (entry === undefined)
+    state.addError(`Manifest entry not found: ${name}`);
+  else {
+    const url = State.manifestUrl(entry, true);
+    if (url)
+      return use(url);
+    else
+      state.addError(`Unable to discern URL for manifest entry: {${name}: ${entry}}`);
+  }
+}
 
 const minifyPlugin = ({ test = isHtmlFile, options = {} } = {}) =>
   Modify.content(/\.html$/, html =>
