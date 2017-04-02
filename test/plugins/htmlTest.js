@@ -52,101 +52,103 @@ function testError(expectedErrors, cfg, cfgMod) {
 
 const choseLocal = o => Object.assign({}, { assets: { chosen: { type: 'local', files: 'hello.js' } } }, o || {});
 
-describe('Plugins.Html.replace', () => {
-  describe('<require>', () => {
+describe('Plugins.Html', () => {
+  describe('replace', () => {
+    describe('<require>', () => {
 
-    it('link to JS: local', () => {
-      const cfg = choseLocal();
-      const exp = '<script src="/out-hello.js"></script>'
-      testPage1(cfg, exp)
-    });
+      it('link to JS: local', () => {
+        const cfg = choseLocal();
+        const exp = '<script src="/out-hello.js"></script>'
+        testPage1(cfg, exp)
+      });
 
-    it('link to JS: external', () => {
-      const cfg = { assets: { chosen: { type: 'external', path: '/thing.js' } } };
-      const exp = '<script src="/thing.js"></script>'
-      testPage1(cfg, exp)
-    });
+      it('link to JS: external', () => {
+        const cfg = { assets: { chosen: { type: 'external', path: '/thing.js' } } };
+        const exp = '<script src="/thing.js"></script>'
+        testPage1(cfg, exp)
+      });
 
-    it('link to JS: cdn', () => {
-      const cfg = { assets: { chosen: jqueryCdn } };
-      const exp = `<script src="${jqueryCdn.url}" integrity="${jqueryCdn.integrity}" crossorigin="anonymous"></script>`;
-      testPage1(cfg, exp)
-    });
+      it('link to JS: cdn', () => {
+        const cfg = { assets: { chosen: jqueryCdn } };
+        const exp = `<script src="${jqueryCdn.url}" integrity="${jqueryCdn.integrity}" crossorigin="anonymous"></script>`;
+        testPage1(cfg, exp)
+      });
 
-    it('link to CSS', () => {
-      const cfg = { assets: { chosen: bootstrapCssCdn } };
-      const exp = `<link rel="stylesheet" href="${bootstrapCssCdn.url}" integrity="${bootstrapCssCdn.integrity}" crossorigin="anonymous">`;
-      testPage1(cfg, exp)
-    });
+      it('link to CSS', () => {
+        const cfg = { assets: { chosen: bootstrapCssCdn } };
+        const exp = `<link rel="stylesheet" href="${bootstrapCssCdn.url}" integrity="${bootstrapCssCdn.integrity}" crossorigin="anonymous">`;
+        testPage1(cfg, exp)
+      });
 
-    it('loads dependencies in order', () => {
-      const cfg = {
-        assets: {
-          chosen: ['d', { type: 'local', files: 'hello.js' }, 'c'],
-        },
-        optional: {
-          a: ['z', { type: 'external', path: '/a.css', manifest: 'a_css' }],
-          b: { type: 'external', path: '/b.js' },
-          c: [{ type: 'external', path: '/c.js', manifest: 'c_js' }, 'b', 'z'],
-          d: ['a'],
-          z: { type: 'external', path: '/z.js' },
-        },
-      };
-      const exps = [
-        '<script src="/z.js"></script>', // chosen -> c -> a -> z
-        '<link rel="stylesheet" href="/a.css">', // chosen -> a
-        '<script src="/b.js"></script>', // chosen -> c -> b
-        '<script src="/c.js"></script>', // chosen -> c
-        '<script src="/out-hello.js"></script>', // chosen
-      ];
-      testPage1(cfg, exps.join("\n"))
-    });
+      it('loads dependencies in order', () => {
+        const cfg = {
+          assets: {
+            chosen: ['d', { type: 'local', files: 'hello.js' }, 'c'],
+          },
+          optional: {
+            a: ['z', { type: 'external', path: '/a.css', manifest: 'a_css' }],
+            b: { type: 'external', path: '/b.js' },
+            c: [{ type: 'external', path: '/c.js', manifest: 'c_js' }, 'b', 'z'],
+            d: ['a'],
+            z: { type: 'external', path: '/z.js' },
+          },
+        };
+        const exps = [
+          '<script src="/z.js"></script>', // chosen -> c -> a -> z
+          '<link rel="stylesheet" href="/a.css">', // chosen -> a
+          '<script src="/b.js"></script>', // chosen -> c -> b
+          '<script src="/c.js"></script>', // chosen -> c
+          '<script src="/out-hello.js"></script>', // chosen
+        ];
+        testPage1(cfg, exps.join("\n"))
+      });
 
-    it('works on "write" ops', () => {
-      const modStr = s => s.replace(/Page 1/g, 'PAGE ONE!!!');
-      const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
-      const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
-      const exp = '<script src="/out-hello.js"></script>'
-      testPage1(cfg, exp, { expectMod: modStr })
-    });
+      it('works on "write" ops', () => {
+        const modStr = s => s.replace(/Page 1/g, 'PAGE ONE!!!');
+        const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
+        const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
+        const exp = '<script src="/out-hello.js"></script>'
+        testPage1(cfg, exp, { expectMod: modStr })
+      });
 
-    it('error when asset attribute missing', () => {
-      const modStr = s => s.replace(' asset="chosen"', '');
-      const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
-      const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
-      testError("<require/> tag needs an 'asset' attribute.", cfg);
-    });
+      it('error when asset attribute missing', () => {
+        const modStr = s => s.replace(' asset="chosen"', '');
+        const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
+        const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
+        testError("<require/> tag needs an 'asset' attribute.", cfg);
+      });
 
-    it('error when invalid asset name', () => {
-      const modStr = s => s.replace('chosen', 'nope');
-      const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
-      const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
-      testError("Asset referenced in <require/> not found: nope", cfg);
-    });
+      it('error when invalid asset name', () => {
+        const modStr = s => s.replace('chosen', 'nope');
+        const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
+        const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
+        testError("Asset referenced in <require/> not found: nope", cfg);
+      });
 
-    it('follows renames', () => {
-      const modPlugin = Plugins.Modify.rename(/\.js$/, f => "renamed-" + f);
-      const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
-      const exp = '<script src="/renamed-out-hello.js"></script>';
-      testPage1(cfg, exp);
-    });
+      it('follows renames', () => {
+        const modPlugin = Plugins.Modify.rename(/\.js$/, f => "renamed-" + f);
+        const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
+        const exp = '<script src="/renamed-out-hello.js"></script>';
+        testPage1(cfg, exp);
+      });
 
-    it('error when file type unrecognised', () => {
-      const modPlugin = Plugins.Modify.rename(/\.js$/, f => f + ".what");
-      const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
-      testError("Don't know what kind of HTML tag is needed to load: /out-hello.js.what", cfg);
-    });
+      it('error when file type unrecognised', () => {
+        const modPlugin = Plugins.Modify.rename(/\.js$/, f => f + ".what");
+        const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
+        testError("Don't know what kind of HTML tag is needed to load: /out-hello.js.what", cfg);
+      });
 
-    it('ignores transitive dependencies', () => {
-      const cfg = {
-        assets: {
-          v: { type: 'local', files: 'vendor/v?z.js', transitive: true },
-          h: { type: 'local', files: 'hello.js' },
-          chosen: ['v', 'h'],
-        }
-      };
-      const exp = '<script src="/out-hello.js"></script>'
-      testPage1(cfg, exp)
+      it('ignores transitive dependencies', () => {
+        const cfg = {
+          assets: {
+            v: { type: 'local', files: 'vendor/v?z.js', transitive: true },
+            h: { type: 'local', files: 'hello.js' },
+            chosen: ['v', 'h'],
+          }
+        };
+        const exp = '<script src="/out-hello.js"></script>'
+        testPage1(cfg, exp)
+      });
     });
   });
 
@@ -163,6 +165,4 @@ describe('Plugins.Html.replace', () => {
       testPage1(cfg, exp, { expectMod: expMin });
     });
   });
-  // TODO favicon
-
 });
