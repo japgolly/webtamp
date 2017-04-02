@@ -13,22 +13,6 @@ const
 
 const { src, target, jqueryCdn, bootstrapCssCdn } = TestData;
 
-const page1Content = FS.readFileSync(src + "/page1.html").toString();
-const page2Content = FS.readFileSync(src + "/page2.html").toString();
-const page3Content = FS.readFileSync(src + "/page3.html").toString();
-const requireTag = '<require asset="chosen" />';
-
-const prepPage = n => cfg => {
-  const c = TestData.cfg(cfg);
-  c.output.name = 'out-[basename]';
-  c.assets.test = { type: 'local', files: `page${n}.html` };
-  if (!c.plugins) c.plugins = [Plugins.Html.replace()];
-  return c;
-}
-const prepPage1 = prepPage(1);
-const prepPage2 = prepPage(2);
-const prepPage3 = prepPage(3);
-
 const testPage = (cfg, expectedContent, to) => {
   const state = Plan.run(cfg);
   Assert.deepEqual(state.errors, []);
@@ -44,23 +28,37 @@ const testPage = (cfg, expectedContent, to) => {
   }], norm);
 }
 
+const makePageTest = n => {
+  const p = {};
+  p.src = `page${n}.html`;
+  p.prep = cfg => {
+    const c = TestData.cfg(cfg);
+    c.output.name = 'out-[basename]';
+    if (!c.assets) c.assets = {};
+    c.assets.test = { type: 'local', files: p.src };
+    if (!c.plugins) c.plugins = [Plugins.Html.replace()];
+    return c;
+  };
+  p.content = FS.readFileSync(`${src}/${p.src}`).toString();
+  p.test = (cfg, expectedContent) => testPage(
+    p.prep(cfg),
+    typeof expectedContent === 'function' ? expectedContent(p.content) : expectedContent,
+    `out-${p.src}`);
+  p.testError = (expectedErrors, cfg, cfgMod) => {
+    const c = p.prep(cfg);
+    if (cfgMod) cfgMod(c);
+    const state = Plan.run(c);
+    Assert.deepEqual(state.errors, Utils.asArray(expectedErrors).map(e => `${p.src}: ${e}`));
+  }
+  return p;
+};
+const pageTest = [undefined].concat([1, 2, 3].map(makePageTest));
+
+const requireTag = '<require asset="chosen" />';
+
 function testPage1(cfg, expectedReplacement, { expectMod = e => e, replace = true } = {}) {
-  let expect = page1Content;
-  if (replace)
-    expect = expect.replace(requireTag, expectedReplacement);
-  expect = expectMod(expect);
-  testPage(prepPage1(cfg), expect, 'out-page1.html');
-}
-
-const testPageError = n => (expectedErrors, cfg) => {
-  const state = Plan.run(cfg);
-  Assert.deepEqual(state.errors, Utils.asArray(expectedErrors).map(e => `page${n}.html: ${e}`));
-}
-
-function testPage1Error(expectedErrors, cfg, cfgMod) {
-  const c = prepPage1(cfg);
-  if (cfgMod) cfgMod(c);
-  testPageError(1)(expectedErrors, c);
+  pageTest[1].test(cfg, c =>
+    expectMod(replace ? c.replace(requireTag, expectedReplacement) : c));
 }
 
 const choseLocal = o => Object.assign({}, { assets: { chosen: { type: 'local', files: 'hello.js' } } }, o || {});
@@ -128,14 +126,14 @@ describe('Plugins.Html', () => {
         const modStr = s => s.replace(' asset="chosen"', '');
         const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
         const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
-        testPage1Error("<require/> tag needs an 'asset' attribute.", cfg);
+        pageTest[1].testError("<require/> tag needs an 'asset' attribute.", cfg);
       });
 
       it('error when invalid asset name', () => {
         const modStr = s => s.replace('chosen', 'nope');
         const modPlugin = Plugins.Modify.content(/\.html$/, modStr);
         const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
-        testPage1Error("Asset referenced in <require/> not found: nope", cfg);
+        pageTest[1].testError("Asset referenced in <require/> not found: nope", cfg);
       });
 
       it('follows renames', () => {
@@ -148,7 +146,7 @@ describe('Plugins.Html', () => {
       it('error when file type unrecognised', () => {
         const modPlugin = Plugins.Modify.rename(/\.js$/, f => f + ".what");
         const cfg = choseLocal({ plugins: [modPlugin, Plugins.Html.replace()] });
-        testPage1Error("Don't know what kind of HTML tag is needed to load: /out-hello.js.what", cfg);
+        pageTest[1].testError("Don't know what kind of HTML tag is needed to load: /out-hello.js.what", cfg);
       });
 
       it('ignores transitive dependencies', () => {
@@ -168,8 +166,8 @@ describe('Plugins.Html', () => {
         it('link to JS: local', () => {
           const cfg = { assets: { x: { type: 'local', files: 'hello.js', manifest: 'chooseMe' } } };
           const exp = '<script src="/out-hello.js"></script>';
-          const expect = page3Content.replace('<require manifest="chooseMe" />', exp);
-          testPage(prepPage3(cfg), expect, 'out-page3.html');
+          const expect = c => c.replace('<require manifest="chooseMe" />', exp);
+          pageTest[3].test(cfg, expect);
         });
 
         // TODO Test other types (CDN loses its integrity due to State.manifestUrl)
@@ -178,14 +176,14 @@ describe('Plugins.Html', () => {
       describe("webtamp: //manifest:", () => {
         it('replace with local url', () => {
           const cfg = { assets: { x: { type: 'local', files: '*.svg', manifest: CamelCase } } };
-          const expect = page2Content
+          const expect = c => c
             .replace('webtamp://manifest/image1Svg', '/out-image1.svg')
             .replace('webtamp://manifest/image2Svg', '/out-image2.svg');
-          testPage(prepPage2(cfg), expect, 'out-page2.html');
+          pageTest[2].test(cfg, expect);
         });
         it('error when no manifest entry', () => {
           const cfg = { assets: { x: { type: 'local', files: '*.svg' } } };
-          testPageError(prepPage2(cfg), [1, 2].map(i => `Manifest entry not found: image${i}Svg`));
+          pageTest[2].testError([1, 2].map(i => `Manifest entry not found: image${i}Svg`), cfg);
         });
       });
     });
