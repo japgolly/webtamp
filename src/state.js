@@ -181,4 +181,10 @@ class State {
   }
 }
 
+State.manifestUrl = (entry, allowCdn) => {
+   let r = entry.local || entry.url;
+   if (!r && allowCdn && entry.cdn) r = entry.cdn.url;
+   return r;
+}
+
 module.exports = State;

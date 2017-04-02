@@ -1,4 +1,6 @@
-const Path = require('path');
+const
+  Path = require('path'),
+  State = require('../state');
 
 const term = n =>
   /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(n) ? n : "`" + n + "`";
@@ -20,8 +22,7 @@ const plugin = ({ object, filename, outputPath, nameMod = n => n }) => state => 
       const v = state.manifest[k];
       // console.log(`${k} = ${require('../utils').inspect(v)}`)
 
-      // Currently only captures local urls
-      const url = v.local || v.url;
+      const url = State.manifestUrl(v, false);
       if (url) {
         const name = nameMod(k);
         defs.push(`def ${term(name)} = ${stringLiteral(url)};`)
