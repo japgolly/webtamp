@@ -36,6 +36,13 @@ const transformRequireTag = state => tree => {
     const assetName = attrs.asset;
     const manifestName = attrs.manifest;
 
+    const replace = fn => {
+      const links = [];
+      fn(links);
+      node.tag = false;
+      node.content = [links.join("\n")].concat(node.content);
+    }
+
     // Validate attribute count
     if (attrs.length === 0)
       state.addError(`<require/> missing attributes.`);
@@ -43,39 +50,37 @@ const transformRequireTag = state => tree => {
       state.addError(`Multiple attributes specified in <require/>: ${attrs}`);
 
     // asset="..."
-    else if (assetName) {
-      const links = [];
-      const seen = new Set();
-      const addAsset = name => {
-        if (state.urls[name] === undefined)
-          state.addError(`Asset referenced in <require/> not found: ${name}`);
-        else if (name && !seen.has(name)) {
-          seen.add(name);
+    else if (assetName)
+      replace(links => {
+        const seen = new Set();
+        const addAsset = name => {
+          if (state.urls[name] === undefined)
+            state.addError(`Asset referenced in <require/> not found: ${name}`);
+          else if (name && !seen.has(name)) {
+            seen.add(name);
 
-          // Add dependencies
-          Object.keys(state.graph[name]).forEach(addAsset);
+            // Add dependencies
+            Object.keys(state.graph[name]).forEach(addAsset);
 
-          // Add named
-          for (const urlEntry of state.urls[name])
-            if (!urlEntry.transitive) {
-              withTagForUrlEntry(state, urlEntry, tag => links.push(tag));
-            }
-        }
-      };
+            // Add named
+            for (const urlEntry of state.urls[name])
+              if (!urlEntry.transitive) {
+                withTagForUrlEntry(state, urlEntry, tag => links.push(tag));
+              }
+          }
+        };
 
-      addAsset(assetName);
-      node.tag = false;
-      node.content = [links.join("\n")].concat(node.content);
-    }
+        addAsset(assetName);
+      })
 
     // manifest="..."
-    else if (manifestName) {
-      const links = [];
-      withManifestUrl(state, manifestName, url =>
-        withTagForUrlEntry(state, { url }, tag => links.push(tag)));
-      node.tag = false;
-      node.content = [links.join("\n")].concat(node.content);
-    }
+    else if (manifestName)
+      replace(links =>
+        withManifestEntry(state, manifestName, manifestEntry => {
+          const urlEntry = State.manifestEntryToUrlEntry(manifestEntry);
+          withTagForUrlEntry(state, urlEntry, tag => links.push(tag));
+        })
+      )
 
     // <require ??? />
     else
@@ -145,18 +150,22 @@ const transformWebtampUrls = state => tree => {
   return tree;
 };
 
-const withManifestUrl = (state, name, use) => {
+const withManifestEntry = (state, name, use) => {
   const entry = state.manifest[name];
   if (entry === undefined)
     state.addError(`Manifest entry not found: ${name}`);
-  else {
+  else
+    return use(entry);
+}
+
+const withManifestUrl = (state, name, use) =>
+  withManifestEntry(state, name, entry => {
     const url = State.manifestUrl(entry, true);
     if (url)
       return use(url);
     else
       state.addError(`Unable to discern URL for manifest entry: {${name}: ${entry}}`);
-  }
-}
+  });
 
 const minifyPlugin = ({ test = isHtmlFile, options = {} } = {}) =>
   Modify.content(/\.html$/, html =>

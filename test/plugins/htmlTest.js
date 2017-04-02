@@ -54,11 +54,16 @@ const makePageTest = n => {
 };
 const pageTest = [undefined].concat([1, 2, 3].map(makePageTest));
 
-const requireTag = '<require asset="chosen" />';
+const requireAssetTag = '<require asset="chosen" />';
+const requireManifestTag = '<require manifest="chooseMe" />';
 
 function testPage1(cfg, expectedReplacement, { expectMod = e => e, replace = true } = {}) {
   pageTest[1].test(cfg, c =>
-    expectMod(replace ? c.replace(requireTag, expectedReplacement) : c));
+    expectMod(replace ? c.replace(requireAssetTag, expectedReplacement) : c));
+}
+
+function testPage3(cfg, expectedReplacement) {
+  pageTest[3].test(cfg, c => c.replace(requireManifestTag, expectedReplacement));
 }
 
 const choseLocal = o => Object.assign({}, { assets: { chosen: { type: 'local', files: 'hello.js' } } }, o || {});
@@ -162,15 +167,25 @@ describe('Plugins.Html', () => {
       });
 
       describe('<require manifest="…" />', () => {
+        const choose = o => Object.assign({}, o, { manifest: 'chooseMe' });
 
         it('link to JS: local', () => {
-          const cfg = { assets: { x: { type: 'local', files: 'hello.js', manifest: 'chooseMe' } } };
+          const cfg = { assets: { x: choose({ type: 'local', files: 'hello.js' }) } };
           const exp = '<script src="/out-hello.js"></script>';
-          const expect = c => c.replace('<require manifest="chooseMe" />', exp);
-          pageTest[3].test(cfg, expect);
+          testPage3(cfg, exp);
         });
 
-        // TODO Test other types (CDN loses its integrity due to State.manifestUrl)
+        it('link to JS: external', () => {
+          const cfg = { assets: { x: choose({ type: 'external', path: '/thing.js' }) } };
+          const exp = '<script src="/thing.js"></script>'
+          testPage3(cfg, exp);
+        });
+
+        it('link to JS: cdn', () => {
+          const cfg = { assets: { x: choose(jqueryCdn) } };
+          const exp = `<script src="${jqueryCdn.url}" integrity="${jqueryCdn.integrity}" crossorigin="anonymous"></script>`;
+          testPage3(cfg, exp)
+        });
       });
 
       describe("webtamp: //manifest:", () => {

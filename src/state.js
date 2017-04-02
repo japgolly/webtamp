@@ -182,9 +182,20 @@ class State {
 }
 
 State.manifestUrl = (entry, allowCdn) => {
-   let r = entry.local || entry.url;
-   if (!r && allowCdn && entry.cdn) r = entry.cdn.url;
-   return r;
+  let r = entry.local || entry.url;
+  if (!r && allowCdn && entry.cdn) r = entry.cdn.url;
+  return r;
+}
+
+State.manifestEntryToUrlEntry = m => {
+  let u = {};
+  if (m.cdn) {
+    Object.assign(u, m.cdn);
+    u.crossorigin = 'anonymous'; // aaaaaaaaaah the temp hacks
+  } else {
+    u.url = State.manifestUrl(m, false);
+  }
+  return u;
 }
 
 module.exports = State;
