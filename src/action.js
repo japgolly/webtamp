@@ -13,6 +13,15 @@ const fmtPath = p => {
   return r.startsWith("../../../") ? p : r;
 };
 
+/**
+ * Compares ops for sorting (for asthetic purposes).
+ */
+const opCmp = (a, b) =>
+  a.type !== b.type ? a.type.localeCompare(b.type) :
+  a.type === 'copy' ? a.from.abs.localeCompare(b.from.abs) :
+  a.type === 'write' ? a.to.path.localeCompare(b.to.path) :
+  null;
+
 const run = ({ ops, errors, warns }, { dryRun } = {}) => {
 
   warns.forEach(msg => console.warn(`[WARN] ${msg}`));
@@ -28,7 +37,9 @@ const run = ({ ops, errors, warns }, { dryRun } = {}) => {
     if (dryRun)
       console.info("DRY-RUN MODE. No actions will be performed.\n");
 
-    ops.forEach((op, i) => runner[op.type](op, i + 1));
+    ops
+      .sort(opCmp)
+      .forEach((op, i) => runner[op.type](op, i + 1));
 
     if (ops.length > 0)
       console.info();
