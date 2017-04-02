@@ -13,10 +13,10 @@ const
 
 const isHtmlFile = i => /\.html$/.test(i.filename);
 
-const replacementPlugin = ({ test = isHtmlFile } = {}) => {
+const replacementPlugin = ({ test = isHtmlFile, modTag = t => t } = {}) => {
   return Modify.stateful(state => {
     const transformations = [
-      transformRequireTag(state),
+      transformRequireTag(state,  modTag),
       transformWebtampUrls(state),
     ];
     return i => {
@@ -30,7 +30,7 @@ const replacementPlugin = ({ test = isHtmlFile } = {}) => {
   });
 }
 
-const transformRequireTag = state => tree => {
+const transformRequireTag = (state,  modTag) => tree => {
   tree.match({ tag: 'require' }, node => {
     const attrs = node.attrs || {};
     const assetName = attrs.asset;
@@ -38,7 +38,11 @@ const transformRequireTag = state => tree => {
 
     const replace = fn => {
       const links = [];
-      fn(links);
+      const add = tag => {
+        const t = modTag(tag);
+        if (t) links.push(t);
+      };
+      fn(add);
       node.tag = false;
       node.content = [links.join("\n")].concat(node.content);
     }
@@ -51,7 +55,7 @@ const transformRequireTag = state => tree => {
 
     // asset="..."
     else if (assetName)
-      replace(links => {
+      replace(addTag => {
         const seen = new Set();
         const addAsset = name => {
           if (state.urls[name] === undefined)
@@ -65,7 +69,7 @@ const transformRequireTag = state => tree => {
             // Add named
             for (const urlEntry of state.urls[name])
               if (!urlEntry.transitive) {
-                withTagForUrlEntry(state, urlEntry, tag => links.push(tag));
+                withTagForUrlEntry(state, urlEntry, addTag);
               }
           }
         };
@@ -75,10 +79,10 @@ const transformRequireTag = state => tree => {
 
     // manifest="..."
     else if (manifestName)
-      replace(links =>
+      replace(addTag =>
         withManifestEntry(state, manifestName, manifestEntry => {
           const urlEntry = State.manifestEntryToUrlEntry(manifestEntry);
-          withTagForUrlEntry(state, urlEntry, tag => links.push(tag));
+          withTagForUrlEntry(state, urlEntry, addTag);
         })
       )
 
