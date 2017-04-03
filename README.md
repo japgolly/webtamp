@@ -26,15 +26,17 @@ It does all the things I need to do for my webapp's assets, after I've used webp
 * CDNs supported directly.
   * Integrity can be specified manually.
   * Integrity can be calculated from local files.
-* Inliner plugin to inline assets (usually with size < n) into `data:` URIs.
+* Assets can be optional and will only be included when referenced (with transitivity).
 * Generate URL manifests.
   * Formats can be JSON and Scala.
   * Configure what is/isn't included in the manifest, and the names of entries.
   * Includes inlined assets.
+* Inliner plugin to inline assets (usually with size < n) into `data:` URIs.
 * HTML integration
-  * Replaces `<require asset="name" />` with tags that load the asset, and all of its dependencies in order.
+  * Replaces `<require ... >` with tags that load the asset, and all of its dependencies in order.
+  * Replaces attributes like `webtamp://manifest/welcomeSvg` with real URLs.
   * Loads from CDN and locally-served assets alike.
-* Assets can be optional and will only be included when referenced (with transitivity).
+  * Any missing assets fail fast.
 * Plugin system.
 
 # Usage
