@@ -11,6 +11,13 @@ The webpack authors are very clear about the scope and boundaries of webpack and
 webtamp exists to address the gap.
 It does all the things I need to do for my webapp's assets, after I've used webpack.
 
+### Contents
+- [Features](#features)
+- [Usage](#usage)
+- [Plugins](#plugins)
+- [Example](#example)
+- [Legal](#legal)
+
 # Features
 
 * Anything can be a top-level asset. No JS loader required or generated.
@@ -50,7 +57,7 @@ It does all the things I need to do for my webapp's assets, after I've used webp
    module.exports = {
 
      output: {
-       dir: "dist",
+       dir: 'dist',
        name: '[name]-[hash].[ext]',
      },
 
@@ -83,9 +90,137 @@ It does all the things I need to do for my webapp's assets, after I've used webp
     ./node_modules/.bin/webtamp [--config <file>] --dryrun
     ```
 
-# Examples
+# Plugins
 
-TODO
+* `webtamp.plugins.Modify.content` - Modify certain files' content.
+* `webtamp.plugins.Modify.rename` - Modify rename certain files.
+* `webtamp.plugins.Modify.{stateful,stateless}` - Modify files' names and content with more control.
+* `webtamp.plugins.Inline.data` - For files that given criteria, exclude from output and replace with a data URI.
+* `webtamp.plugins.Html.replace` - Replace `<require>` tags and `webtamp://` URIs with real asset tags/links. Missing assets will fail the build.
+* `webtamp.plugins.Html.minify` - Minify HTML.
+
+# Example
+
+This will demonstrate a number of features. Not all but enough to be useful.
+
+Say you have a tree of files like:
+```
+example
+├── node_modules
+│   ├── jquery
+│   │   └── dist
+│   │       └── jquery.min.js
+│   └── katex
+│       └── dist
+│           ├── fonts
+│           │   ├── KaTeX_Size1-Regular.eot
+│           │   ├── KaTeX_Size1-Regular.ttf
+│           │   ├── KaTeX_Size1-Regular.woff
+│           │   └── KaTeX_Size1-Regular.woff2
+│           ├── katex.min.css
+│           └── katex.min.js
+├── src
+│   ├── assets
+│   │   ├── tiny.svg
+│   │   └── welcome.svg
+│   └── html
+│       └── index.html
+└── vendor
+    └── blerb.js
+```
+
+And a webtamp config like:
+```js
+const camelcase = require('camelcase');
+const webtamp = require('webtamp');
+
+module.exports = {
+
+  output: {
+    dir: 'dist',
+    name: '[hash:8]-[name].[ext]',
+  },
+
+  assets: {
+    html: { type: 'local', src: 'src/html', files: '**/*.html', outputName: '[path]/[basename]' },
+    images: { type: 'local', src: 'src/assets', files: '**/*.{svg,ico}', manifest: camelcase },
+    main: [ 'blerb', 'katex' ],
+  },
+
+  optional: {
+
+    jquery: {
+      type: 'cdn',
+      url: `https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js`,
+      integrity: { files: 'node_modules/jquery/dist/jquery.min.js' },
+    },
+
+    blerb: [
+      { type: 'local', files: 'vendor/blerb.js', manifest: true },
+      'jquery', // This here means blerb requires jquery
+    ],
+
+    katex: [
+      { type: 'local', src: 'node_modules/katex/dist', files: '*.min.js' },
+      { type: 'local', src: 'node_modules/katex/dist', files: 'fonts/**/*', transitive: true },
+    ],
+  },
+
+  plugins: [
+    Webtamp.plugins.Inline.data(i => /\.svg$/.test(i.dest) && i.size() < 4096),
+    Webtamp.plugins.Html.replace(),
+  ],
+}
+```
+
+Now lets say the content of your `src/html/index.html` is as follows:
+```html
+<html>
+  <head>
+    <!-- *********** ↓ replaces this ↓ *********** -->
+    <require asset="main" />
+  </head>
+  <body>
+    <!-- *********** ↓ replaces these ↓ *********** -->
+    <img src="webtamp://manifest/tinySvg" alt="Tiny!">
+    <img src="webtamp://manifest/welcomeSvg" alt="Welcome!">
+  </body>
+</html>
+```
+
+After running webtamp, you'll have a `dist` directory like this:
+```
+dist
+├── 03bef6aa-katex.min.js
+├── 1b40ddd6-katex.min.css
+├── 5eb3a560-welcome.svg
+├── 88fee037-blerb.js
+├── fonts
+│   ├── KaTeX_Size1-Regular.eot
+│   ├── KaTeX_Size1-Regular.ttf
+│   ├── KaTeX_Size1-Regular.woff
+│   └── KaTeX_Size1-Regular.woff2
+└── index.html
+```
+
+And the `dist/index.html` after the `Html.replace` plugin now looks like this:
+```html
+<html>
+  <head>
+    <!-- *********** ↓ replaces this ↓ *********** -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script src="/88fee037-blerb.js"></script>
+    <script src="/03bef6aa-katex.min.js"></script>
+    <link  href="/1b40ddd6-katex.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <!-- *********** ↓ replaces these ↓ *********** -->
+    <img src="data:image/svg+xml;base64,VGhpcyBpcyBqdXN0IGFuIGV4YW1wbGUK" alt="Tiny!">
+    <img src="/5eb3a560-welcome.svg" alt="Welcome!">
+  </body>
+</html>
+```
+
 
 # Legal
 
