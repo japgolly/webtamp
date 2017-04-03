@@ -25,7 +25,7 @@ const plugin = ({ object, filename, outputPath, nameMod = n => n }) => state => 
       const url = State.manifestUrl(v, false);
       if (url) {
         const name = nameMod(k);
-        defs.push(`def ${term(name)} = ${stringLiteral(url)};`)
+        defs.push(`def ${term(name)} = ${stringLiteral(url)}`)
       }
 
       // final case class Resource(url: String, integrity: Option[String])
