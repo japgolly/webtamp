@@ -98,6 +98,8 @@ It does all the things I need to do for my webapp's assets, after I've used webp
 * `webtamp.plugins.Inline.data` - For files that given criteria, exclude from output and replace with a data URI.
 * `webtamp.plugins.Html.replace` - Replace `<require>` tags and `webtamp://` URIs with real asset tags/links. Missing assets will fail the build.
 * `webtamp.plugins.Html.minify` - Minify HTML.
+* `webtamp.plugins.ScalaManifest` - Generate the asset manifest in [Scala](http://scala-lang.org/)/[Scala.JS](https://www.scala-js.org/).
+
 
 # Example
 
