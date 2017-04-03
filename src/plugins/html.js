@@ -13,24 +13,22 @@ const
 
 const isHtmlFile = i => /\.html$/.test(i.filename);
 
-const replacementPlugin = ({ test = isHtmlFile, modTag = t => t } = {}) => {
-  return Modify.stateful(state => {
-    const transformations = [
-      transformRequireTag(state,  modTag),
-      transformWebtampUrls(state),
-    ];
-    return i => {
-      if (test(i)) {
-        const newContent = PostHtml(transformations)
-          .process(i.content(), { sync: true })
-          .html
-        return { newContent };
-      }
+const replacementPlugin = ({ test = isHtmlFile, modTag = i => t => t } = {}) => {
+  return Modify.stateful(state => i => {
+    if (test(i)) {
+      const transformations = [
+        transformRequireTag(state, modTag(i)),
+        transformWebtampUrls(state),
+      ];
+      const newContent = PostHtml(transformations)
+        .process(i.content(), { sync: true })
+        .html
+      return { newContent };
     }
   });
 }
 
-const transformRequireTag = (state,  modTag) => tree => {
+const transformRequireTag = (state, modTag) => tree => {
   tree.match({ tag: 'require' }, node => {
     const attrs = node.attrs || {};
     const assetName = attrs.asset;
