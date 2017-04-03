@@ -1,4 +1,4 @@
-# webtamp [![Build Status](https://travis-ci.org/japgolly/webtamp.svg?branch=master)](https://travis-ci.org/japgolly/webtamp)
+# webtamp [![Build Status](https://travis-ci.org/japgolly/webtamp.svg?branch=master)](https://travis-ci.org/japgolly/webtamp) [![npm](https://img.shields.io/npm/v/webtamp.svg)](https://www.npmjs.com/package/webtamp)
 
 webtamp is bundler for assets.
 It is inspired by webpack, and meant to be a companion to JS-driven bundlers like webpack.
