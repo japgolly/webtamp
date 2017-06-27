@@ -13,7 +13,7 @@
   "dependencies": {
     "camelcase": "^4.0.0",
     "commander": "^2.9.0",
-    "fs-extra": "^2.1.2",
+    "fs-extra": "^3.0.1",
     "glob": "^7.1.1",
     "html-minifier": "^3.4.2",
     "mime-types": "^2.1.15",
@@ -21,7 +21,7 @@
     "sprintf-js": "^1.0.3"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
+    "chai": "^4.0.2",
     "mocha": "^3.2.0"
   },
   "engines": {
