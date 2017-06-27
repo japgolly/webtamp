@@ -65,5 +65,16 @@ describe('Plugins.Inline', () => {
       });
     });
 
+    it('works on new content after a content modification', () => {
+      const plugins = [
+        Plugins.Modify.content(/\.svg$/, c => "hello"),
+        Plugins.Inline.data(i => true)
+      ];
+      const cfg = TestData.cfg({ assets: { svg1 }, plugins });
+      testPlan(cfg, expect => {
+        expect.addManifestEntry('svg1', { url: 'data:image/svg+xml;base64,aGVsbG8=' })
+      });
+    });
+
   });
 });
