@@ -43,7 +43,7 @@ const inlineData = criteria => state => {
           manifestName: name,
           src: op.originallyFrom.abs,
           stat: op.originallyFrom.stat, // TODO yuk
-          size: op.content.size,
+          size: () => op.content.length,
           dest,
         }
         inline(op, arg, () => new Buffer(op.content));

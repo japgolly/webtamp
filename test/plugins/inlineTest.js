@@ -68,7 +68,8 @@ describe('Plugins.Inline', () => {
     it('works on new content after a content modification', () => {
       const plugins = [
         Plugins.Modify.content(/\.svg$/, c => "hello"),
-        Plugins.Inline.data(i => true)
+        Plugins.Inline.data(i => i.size() == 5)
+        // Plugins.Inline.data(i => {console.log(`size = ${i.size()}`,i); return i.size() == 5})
       ];
       const cfg = TestData.cfg({ assets: { svg1 }, plugins });
       testPlan(cfg, expect => {
