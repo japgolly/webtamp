@@ -154,7 +154,7 @@ const transformWebtampUrls = state => tree => {
 };
 
 const withManifestEntry = (state, name, use) => {
-  const entry = state.manifest.paths[name];
+  const entry = state.manifest.entries[name];
   if (entry === undefined)
     state.addError(`Manifest entry not found: ${name}`);
   else

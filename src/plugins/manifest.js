@@ -20,8 +20,8 @@ const scala = ({ object, filename, outputPath, nameMod = n => n }) => state => {
     const [, pkg, obj] = fqcn;
 
     const defs = [];
-    for (const k of Object.keys(manifest.paths).sort()) {
-      const v = manifest.paths[k];
+    for (const k of Object.keys(manifest.entries).sort()) {
+      const v = manifest.entries[k];
       // console.log(`${k} = ${require('../utils').inspect(v)}`)
 
       const url = Manifest.url(v, false);

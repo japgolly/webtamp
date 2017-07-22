@@ -4,16 +4,16 @@ const Utils = require('./utils');
 
 class Manifest {
   constructor() {
-    this.paths = {};
+    this.entries = {};
   }
 
   addPath(k, v) {
-    if (this.paths[k] && this.paths[k] !== v) {
+    if (this.entries[k] && this.entries[k] !== v) {
       const o = {}
-      o[k] = this.paths[k];
+      o[k] = this.entries[k];
       this.addWarn("Overwriting manifest entry: " + JSON.stringify(o))
     }
-    this.paths[k] = v;
+    this.entries[k] = v;
   }
 
   addPathLocal(name, local) {
@@ -25,11 +25,11 @@ class Manifest {
   }
 
   mapPathValues(f) {
-    this.paths = Utils.mapObjectValues(this.paths, f);
+    this.entries = Utils.mapObjectValues(this.entries, f);
   }
 
   writeOpJson() {
-    return JSON.stringify(this.paths, null, '  ');
+    return JSON.stringify(this.entries, null, '  ');
   }
 }
 

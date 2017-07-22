@@ -20,7 +20,7 @@ describe('Plugins.Modify', () => {
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/hello.js' }] });
-      Assert.deepEqual(state.manifest, {paths: {}});
+      Assert.deepEqual(state.manifest, {entries: {}});
     });
 
     it("affects type: local with manifest", () => {
@@ -29,7 +29,7 @@ describe('Plugins.Modify', () => {
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/hello.js' }] });
-      Assert.deepEqual(state.manifest, {paths: { wow: { local: '/hello.js' } }});
+      Assert.deepEqual(state.manifest, {entries: { wow: { local: '/hello.js' } }});
     });
 
     it("uses specified filename test", () => {
@@ -38,7 +38,7 @@ describe('Plugins.Modify', () => {
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/copy-hello.js' }] });
-      Assert.deepEqual(state.manifest, {paths: { wow: { local: '/copy-hello.js' } }});
+      Assert.deepEqual(state.manifest, {entries: { wow: { local: '/copy-hello.js' } }});
     });
 
     it("ignores type: cdn", () => {
@@ -47,7 +47,7 @@ describe('Plugins.Modify', () => {
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [jqueryUrlEntry] });
-      Assert.deepEqual(state.manifest, {paths: { hello: jqueryManifestEntry }});
+      Assert.deepEqual(state.manifest, {entries: { hello: jqueryManifestEntry }});
     });
 
     it("ignores type: external", () => {
@@ -56,7 +56,7 @@ describe('Plugins.Modify', () => {
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/thing.js' }] });
-      Assert.deepEqual(state.manifest, {paths: { wow: { local: '/thing.js' } }});
+      Assert.deepEqual(state.manifest, {entries: { wow: { local: '/thing.js' } }});
     });
 
     it("ignores transitive assets", () => {
@@ -65,7 +65,7 @@ describe('Plugins.Modify', () => {
       const state = Plan.run(cfg);
       Assert.deepEqual(state.errors, []);
       Assert.deepEqual(state.urls, { hello: [{ url: '/hello.js', transitive: true }] });
-      Assert.deepEqual(state.manifest, {paths: {}});
+      Assert.deepEqual(state.manifest, {entries: {}});
     });
 
   });
