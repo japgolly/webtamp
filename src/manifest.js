@@ -7,7 +7,7 @@ class Manifest {
     this.entries = {};
   }
 
-  addPath(k, v) {
+  addEntry(k, v) {
     if (this.entries[k] && this.entries[k] !== v) {
       const o = {}
       o[k] = this.entries[k];
@@ -17,14 +17,26 @@ class Manifest {
   }
 
   addPathLocal(name, local) {
-    this.addPath(name, { local })
+    this.addEntry(name, { local })
   }
 
   addPathCdn(name, cdn) {
-    this.addPath(name, { cdn })
+    this.addEntry(name, { cdn })
   }
 
-  mapPathValues(f) {
+  addUrl(name, url) {
+    this.addEntry(name, { url })
+  }
+
+  addList(name, list) {
+    this.addEntry(name, { list })
+  }
+
+  delete(name) {
+    delete this.entries[name];
+  }
+
+  mapValues(f) {
     this.entries = Utils.mapObjectValues(this.entries, f);
   }
 

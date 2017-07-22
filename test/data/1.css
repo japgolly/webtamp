@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin');
+
+@font-face {
+  font-family: Icons;
+  src: url(icons.eot);
+  src: url(icons.eot?#iefix) format("embedded-opentype"),
+       url(icons.woff2) format("woff2"),
+       url(icons.woff) format("woff"),
+       url(icons.ttf) format("truetype"),
+       url(icons.svg#icons) format("svg");
+  font-style: normal;
+  font-weight: 400;
+  font-variant: normal;
+  text-decoration: inherit;
+  text-transform: none
+}

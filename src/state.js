@@ -1,6 +1,6 @@
 "use strict";
 
-const { assertObject, OutputFile } = require('./utils');
+const { assertObject, fixRelativePath, OutputFile } = require('./utils');
 const Manifest = require('./manifest');
 
 class State {
@@ -65,6 +65,20 @@ class State {
 
   removeOp(op) {
     this.ops = this.ops.filter(o => o !== op);
+  }
+
+  getOpThatCreatesLocalFile(path) {
+    const p = fixRelativePath(path);
+    const f = {
+      copy : op => op.to.path === p,
+      write: op => op.to.path === p,
+    }
+    const r = this.ops.filter(op => f[op.type](op));
+    if (r.length === 0)
+      this.addError(`Unable to find op that writes to ${path}`);
+    else if (r.length > 1)
+      this.addError(`Multiple ops write to ${path}: ${r}`);
+    return r[0];
   }
 
   checkThenRunIfNoErrors(check, run) {
@@ -164,5 +178,11 @@ class State {
     };
   }
 }
+
+State.opContent = op =>
+  ({
+    copy : () => op.from.content().toString(),
+    write: () => op.content,
+  })[op.type]();
 
 module.exports = State;

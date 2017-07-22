@@ -30,7 +30,8 @@ const inlineData = criteria => state => {
           state.removeOp(op);
           const mediatype = mimeType === '' ? '' : `${mimeType};`;
           const data = contentBufferFn().toString("base64");
-          state.manifest.entries[name] = { url: `data:${mediatype}base64,${data}` };
+          state.manifest.delete(name);
+          state.manifest.addUrl(name, `data:${mediatype}base64,${data}`);
         });
     }
 

@@ -30,6 +30,6 @@
   },
   "scripts": {
     "test": "mocha 'test/**/*Test.js'",
-    "watch": "nodemon --watch . -x 'yarn test'"
+    "watch": "nodemon --watch . -x 'clear;yarn test'"
   }
 }

@@ -6,6 +6,9 @@ const Path = require('path');
 
 const data = {
 
+  css1: { type: 'local', files: '1.css', manifest: 'css1' },
+  css2: { type: 'local', files: '2.css', manifest: 'css2' },
+
   vizJs: { type: 'local', files: 'vendor/v?z.js', manifest: true },
   vizJsExplicit: { type: 'local', files: 'vendor/v?z.js', manifest: 'vizJs' },
 

@@ -57,7 +57,7 @@ const main = logic => state => {
     state.urls = Utils.mapObjectValues(state.urls, urls => urls.map(replaceAtKey('url')));
 
     // Repalce state.manifest
-    state.manifest.mapPathValues(replaceAtKey('local'));
+    state.manifest.mapValues(replaceAtKey('local'));
   };
 
   for (const op of state.ops) {
