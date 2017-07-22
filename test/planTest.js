@@ -17,7 +17,7 @@ function addSvgExpectations(expect) {
   for (const i of [1, 2]) {
     const f = `image${i}.svg`;
     expect.addOpCopy(new LocalSrc(src, f), f);
-    expect.addManifestEntryLocal(`image${i}Svg`, '/' + f)
+    expect.manifest.addPathLocal(`image${i}Svg`, '/' + f)
   }
 }
 
@@ -35,7 +35,7 @@ describe('Plan', () => {
         const cfg = makeCfg({ assets: { vizJs } });
         testPlan(cfg, expect => {
           expect.addOpCopy(new LocalSrc(src, 'vendor/viz.js'), 'viz.js');
-          expect.addManifestEntryLocal('vizJs', '/viz.js')
+          expect.manifest.addPathLocal('vizJs', '/viz.js')
         })
       });
 
@@ -45,7 +45,7 @@ describe('Plan', () => {
         });
         testPlan(cfg, expect => {
           expect.addOpCopy(new LocalSrc(src + '/vendor', 'viz.js'), 'viz.js');
-          expect.addManifestEntryLocal('vizJs', '/viz.js')
+          expect.manifest.addPathLocal('vizJs', '/viz.js')
         })
       });
 
@@ -64,7 +64,7 @@ describe('Plan', () => {
         });
         testPlan(cfg, expect => {
           expect.addOpCopy(new LocalSrc(src, 'vendor/viz.js'), 'viz.js');
-          expect.addManifestEntryLocal('omgJs', '/viz.js')
+          expect.manifest.addPathLocal('omgJs', '/viz.js')
         });
       });
 
@@ -84,7 +84,7 @@ describe('Plan', () => {
         });
         testPlan(cfg, expect => {
           expect.addOpCopy(new LocalSrc(src, 'vendor/viz.js'), 'e4e91995e194dd59cafba1c0dad576c6.js');
-          expect.addManifestEntryLocal('vizJs', '/e4e91995e194dd59cafba1c0dad576c6.js')
+          expect.manifest.addPathLocal('vizJs', '/e4e91995e194dd59cafba1c0dad576c6.js')
         });
       });
 
@@ -105,7 +105,7 @@ describe('Plan', () => {
           for (const i of [1, 2]) {
             const f = `image${i}.svg`;
             expect.addOpCopy(new LocalSrc(src, f), 'img/' + f);
-            expect.addManifestEntryLocal(`image${i}Svg`, '/img/' + f)
+            expect.manifest.addPathLocal(`image${i}Svg`, '/img/' + f)
           }
         });
       });
@@ -120,7 +120,7 @@ describe('Plan', () => {
             const fi = `image${i}.svg`;
             const fo = `${hashes[i-1]}.svg`;
             expect.addOpCopy(new LocalSrc(src, fi), fo);
-            expect.addManifestEntryLocal(`image${i}Svg`, '/' + fo)
+            expect.manifest.addPathLocal(`image${i}Svg`, '/' + fo)
           }
         });
       });
@@ -214,8 +214,8 @@ describe('Plan', () => {
     describe('external', () => {
       const a = { type: 'external', path: 'a.js' };
       const b = { type: 'external', path: '/b.js' };
-      const okA = (expect, mName) => { if (mName) expect.addManifestEntryLocal(mName, '/a.js') };
-      const okB = (expect, mName) => { if (mName) expect.addManifestEntryLocal(mName, '/b.js') };
+      const okA = (expect, mName) => { if (mName) expect.manifest.addPathLocal(mName, '/a.js') };
+      const okB = (expect, mName) => { if (mName) expect.manifest.addPathLocal(mName, '/b.js') };
       testManifestRequiredInArray(a, b, i => i.path, okA, okB);
     });
 
@@ -242,7 +242,7 @@ describe('Plan', () => {
           });
           testPlan(cfg, expect => {
             expect.addOpCopy(new LocalSrc(src, 'vendor/viz.js'), 'viz.js');
-            expect.addManifestEntryLocal('vizJs', '/viz.js');
+            expect.manifest.addPathLocal('vizJs', '/viz.js');
           });
         });
       });
@@ -274,7 +274,7 @@ describe('Plan', () => {
         testPlan(cfg, expectFn);
       };
 
-      const testOk = (def, out) => test(def, expect => expect.addManifestEntryCdn('x', out));
+      const testOk = (def, out) => test(def, expect => expect.manifest.addPathCdn('x', out));
       const testErr = (def, err) => test(def, expect => expect.addError(err));
 
       it('integrity specified', () => {
@@ -323,8 +323,8 @@ describe('Plan', () => {
       const url2 = 'https://unpkg.com/react@15.3.1/dist/react.min.js';
       const a = { type: 'cdn', url: url, integrity: image1SvgSha256 };
       const b = { type: 'cdn', url: url2, integrity: image2SvgSha256 };
-      const okA = (expect, mName) => { if (mName) expect.addManifestEntryCdn(mName, { url: url, integrity: image1SvgSha256 }) };
-      const okB = (expect, mName) => { if (mName) expect.addManifestEntryCdn(mName, { url: url2, integrity: image2SvgSha256 }) };
+      const okA = (expect, mName) => { if (mName) expect.manifest.addPathCdn(mName, { url: url, integrity: image1SvgSha256 }) };
+      const okB = (expect, mName) => { if (mName) expect.manifest.addPathCdn(mName, { url: url2, integrity: image2SvgSha256 }) };
       testManifestRequiredInArray(a, b, i => i.url, okA, okB);
     });
 
@@ -351,10 +351,10 @@ describe('Plan', () => {
         testPlan(cfg, expect => {
           addSvgExpectations(expect);
           expect.addOpCopy(new LocalSrc(src, 'vendor/viz.js'), 'viz.js');
-          expect.addManifestEntryLocal('vizJs', '/viz.js');
-          expect.addManifestEntryLocal('n', '/n');
-          expect.addManifestEntryLocal('l', '/l');
-          expect.addManifestEntryCdn('j', { url: jqueryUrl, integrity: image1SvgSha256 });
+          expect.manifest.addPathLocal('vizJs', '/viz.js');
+          expect.manifest.addPathLocal('n', '/n');
+          expect.manifest.addPathLocal('l', '/l');
+          expect.manifest.addPathCdn('j', { url: jqueryUrl, integrity: image1SvgSha256 });
         });
         // console.log(Plan.run(cfg));
       });

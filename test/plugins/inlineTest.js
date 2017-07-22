@@ -43,9 +43,9 @@ describe('Plugins.Inline', () => {
       const cfg = TestData.cfg({ assets: { svgs123 }, plugins });
       testPlan(cfg, expect => {
         expect.addOpCopy(new LocalSrc(src, 'image3.svg'), 'image3.svg');
-        expect.addManifestEntry('image1Svg', { url: 'data:image/svg+xml;base64,aW1hZ2UxCg==' })
-        expect.addManifestEntry('image2Svg', { url: 'data:image/svg+xml;base64,aW1hZ2UyCg==' })
-        expect.addManifestEntryLocal('image3Svg', '/image3.svg')
+        expect.manifest.addPath('image1Svg', { url: 'data:image/svg+xml;base64,aW1hZ2UxCg==' })
+        expect.manifest.addPath('image2Svg', { url: 'data:image/svg+xml;base64,aW1hZ2UyCg==' })
+        expect.manifest.addPathLocal('image3Svg', '/image3.svg')
       });
     });
 
@@ -53,7 +53,7 @@ describe('Plugins.Inline', () => {
       const plugins = [Plugins.Inline.data(i => 'hello')];
       const cfg = TestData.cfg({ assets: { svg1 }, plugins });
       testPlan(cfg, expect => {
-        expect.addManifestEntry('svg1', { url: 'data:hello;base64,aW1hZ2UxCg==' })
+        expect.manifest.addPath('svg1', { url: 'data:hello;base64,aW1hZ2UxCg==' })
       });
     });
 
@@ -61,7 +61,7 @@ describe('Plugins.Inline', () => {
       const plugins = [Plugins.Inline.data(i => '')];
       const cfg = TestData.cfg({ assets: { svg1 }, plugins });
       testPlan(cfg, expect => {
-        expect.addManifestEntry('svg1', { url: 'data:base64,aW1hZ2UxCg==' })
+        expect.manifest.addPath('svg1', { url: 'data:base64,aW1hZ2UxCg==' })
       });
     });
 
@@ -73,7 +73,7 @@ describe('Plugins.Inline', () => {
       ];
       const cfg = TestData.cfg({ assets: { svg1 }, plugins });
       testPlan(cfg, expect => {
-        expect.addManifestEntry('svg1', { url: 'data:image/svg+xml;base64,aGVsbG8=' })
+        expect.manifest.addPath('svg1', { url: 'data:image/svg+xml;base64,aGVsbG8=' })
       });
     });
 

@@ -1,6 +1,7 @@
 "use strict";
 
 const { assertObject, OutputFile } = require('./utils');
+const Manifest = require('./manifest');
 
 class State {
   constructor(src, target) {
@@ -9,7 +10,7 @@ class State {
     this.ops = [];
     this.errors = [];
     this.warns = [];
-    this.manifest = {};
+    this.manifest = new Manifest();
     this.urls = {};
     this.deps = {};
     this.pending = {};
@@ -71,23 +72,6 @@ class State {
     const a = check();
     if (this.errors.length === errCount)
       run(a);
-  }
-
-  addManifestEntry(k, v) {
-    if (this.manifest[k] && this.manifest[k] !== v) {
-      const o = {}
-      o[k] = this.manifest[k];
-      this.addWarn("Overwritting manifest entry: " + JSON.stringify(o))
-    }
-    this.manifest[k] = v;
-  }
-
-  addManifestEntryLocal(name, local) {
-    this.addManifestEntry(name, { local })
-  }
-
-  addManifestEntryCdn(name, cdn) {
-    this.addManifestEntry(name, { cdn })
   }
 
   registerNow(name) {
@@ -179,23 +163,6 @@ class State {
       graph: this.graph,
     };
   }
-}
-
-State.manifestUrl = (entry, allowCdn) => {
-  let r = entry.local || entry.url;
-  if (!r && allowCdn && entry.cdn) r = entry.cdn.url;
-  return r;
-}
-
-State.manifestEntryToUrlEntry = m => {
-  let u = {};
-  if (m.cdn) {
-    Object.assign(u, m.cdn);
-    u.crossorigin = 'anonymous'; // aaaaaaaaaah the temp hacks
-  } else {
-    u.url = State.manifestUrl(m, false);
-  }
-  return u;
 }
 
 module.exports = State;

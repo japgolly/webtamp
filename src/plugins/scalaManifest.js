@@ -1,5 +1,6 @@
 const
   Path = require('path'),
+  Manifest = require('../manifest');
   State = require('../state');
 
 const term = n =>
@@ -15,14 +16,15 @@ const plugin = ({ object, filename, outputPath, nameMod = n => n }) => state => 
     state.addError(`Invalid object FQCN: ${objectName}`);
   } else {
 
+    const manifest = state.manifest;
     const [, pkg, obj] = fqcn;
 
     const defs = [];
-    for (const k of Object.keys(state.manifest).sort()) {
-      const v = state.manifest[k];
+    for (const k of Object.keys(manifest.paths).sort()) {
+      const v = manifest.paths[k];
       // console.log(`${k} = ${require('../utils').inspect(v)}`)
 
-      const url = State.manifestUrl(v, false);
+      const url = Manifest.url(v, false);
       if (url) {
         const name = nameMod(k);
         defs.push(`def ${term(name)} = ${stringLiteral(url)}`)

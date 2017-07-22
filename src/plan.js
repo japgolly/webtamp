@@ -135,7 +135,7 @@ const planLocal =
             else
               return name;
           }
-          addManifest(state, name, manifest, whenTrue, () => f, n => state.addManifestEntryLocal(n, url));
+          addManifest(state, name, manifest, whenTrue, () => f, n => state.manifest.addPathLocal(n, url));
         }
       }
     })
@@ -192,7 +192,7 @@ const planCdn =
       state.registerNow(name);
       state.addUrl(name, Object.assign({ crossorigin: 'anonymous' }, o));
       arityAwareManifestName(state, url, inArray, name, manifest, fnArg, n => {
-        state.addManifestEntryCdn(n, o);
+        state.manifest.addPathCdn(n, o);
       });
     }
   })
@@ -207,7 +207,7 @@ const planExternal =
     state.registerNow(name);
     state.addUrl(name, { url });
     arityAwareManifestName(state, path, inArray, name, manifest, () => path, n => {
-      state.addManifestEntryLocal(n, url);
+      state.manifest.addPathLocal(n, url);
     });
   })
 
@@ -282,7 +282,7 @@ const runPlugins = cfg => Utils.tap(state => {
 const generateManifest = cfg => Utils.tap(state => {
   if (state.ok()) {
     const gen = filename => {
-      state.addOpWrite(filename, JSON.stringify(state.manifest, null, '  '));
+      state.addOpWrite(filename, state.manifest.writeOpJson());
     };
     const m = cfg.output.manifest;
     if (m === undefined || m === true)

@@ -9,7 +9,7 @@ const
 //             undefined | Bool | (mime-type :: null | string)
 
 const inlineData = criteria => state => {
-  for (const [name, value] of Object.entries(state.manifest)) {
+  for (const [name, value] of Object.entries(state.manifest.paths)) {
     const dest = Utils.fixRelativePath(value.local);
 
     function inline(op, arg, contentBufferFn) {
@@ -30,7 +30,7 @@ const inlineData = criteria => state => {
           state.removeOp(op);
           const mediatype = mimeType === '' ? '' : `${mimeType};`;
           const data = contentBufferFn().toString("base64");
-          state.manifest[name] = { url: `data:${mediatype}base64,${data}` };
+          state.manifest.paths[name] = { url: `data:${mediatype}base64,${data}` };
         });
     }
 

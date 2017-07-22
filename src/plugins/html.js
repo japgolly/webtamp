@@ -4,6 +4,7 @@ const
   Entities = require("entities"),
   FS = require('fs'),
   HtmlMinifier = require('html-minifier'),
+  Manifest = require('../manifest'),
   Mime = require('mime-types'),
   Modify = require('./modify'),
   Path = require('path'),
@@ -79,7 +80,7 @@ const transformRequireTag = (state, modTag) => tree => {
     else if (manifestName)
       replace(addTag =>
         withManifestEntry(state, manifestName, manifestEntry => {
-          const urlEntry = State.manifestEntryToUrlEntry(manifestEntry);
+          const urlEntry = Manifest.manifestEntryToUrlEntry(manifestEntry);
           withTagForUrlEntry(state, urlEntry, addTag);
         })
       )
@@ -153,7 +154,7 @@ const transformWebtampUrls = state => tree => {
 };
 
 const withManifestEntry = (state, name, use) => {
-  const entry = state.manifest[name];
+  const entry = state.manifest.paths[name];
   if (entry === undefined)
     state.addError(`Manifest entry not found: ${name}`);
   else
@@ -162,7 +163,7 @@ const withManifestEntry = (state, name, use) => {
 
 const withManifestUrl = (state, name, use) =>
   withManifestEntry(state, name, entry => {
-    const url = State.manifestUrl(entry, true);
+    const url = Manifest.url(entry, true);
     if (url)
       return use(url);
     else
