@@ -9,7 +9,7 @@ const term = n =>
 const stringLiteral = s =>
   /["\n\r\t\\]/.test(s) ? `"""${s}"""` : `"${s}"`;
 
-const plugin = ({ object, filename, outputPath, nameMod = n => n }) => state => {
+const scala = ({ object, filename, outputPath, nameMod = n => n }) => state => {
 
   const fqcn = object.match(/^(.+)\.([^.]+)$/);
   if (!fqcn) {
@@ -55,4 +55,6 @@ const plugin = ({ object, filename, outputPath, nameMod = n => n }) => state => 
   }
 };
 
-module.exports = plugin;
+module.exports = {
+  generate: {scala}
+};

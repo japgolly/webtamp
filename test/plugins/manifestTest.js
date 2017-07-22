@@ -12,7 +12,7 @@ const { target, vizJs, jqueryCdnM } = TestData;
 
 const wwJs = { type: 'external', path: '/ww.js', manifest: true };
 
-describe('Plugins.ScalaManifest', () => {
+describe('Plugins.Manifest.generate.scala', () => {
 
   it("generates a Scala manifest (local and data URLs only)", () => {
     const cfg = TestData.cfg({
@@ -24,7 +24,7 @@ describe('Plugins.ScalaManifest', () => {
       },
       plugins: [
         Plugins.Inline.data(i => /image2/.test(i.dest)),
-        Plugins.ScalaManifest({ object: "demo.test.Manifest" }),
+        Plugins.Manifest.generate.scala({ object: "demo.test.Manifest" }),
       ],
     });
     const filename = "Manifest.scala"
@@ -57,7 +57,7 @@ object Manifest {
     const filename = "Hi.scala"
     const cfg = TestData.cfg({
       assets: { wwJs },
-      plugins: [ Plugins.ScalaManifest({ object: "hehe.Hi", outputPath, filename }) ],
+      plugins: [ Plugins.Manifest.generate.scala({ object: "hehe.Hi", outputPath, filename }) ],
     });
     const state = Plan.run(cfg);
     Assert.deepEqual(state.errors, []);
