@@ -88,6 +88,8 @@ object Manifest {
 
   def image2Svg = "data:image/svg+xml;base64,aW1hZ2UyCg=="
 
+  def jquery = "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"
+
   def vizJs = "/viz-e4e91995e194dd59.js"
 
   def wwJs = "/ww.js"

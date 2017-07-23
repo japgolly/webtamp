@@ -48,7 +48,7 @@ const scala = ({ object, filename, outputPath, nameMod = n => n }) => state => {
       // console.log(`${k} = ${require('../utils').inspect(v)}`)
 
       const name = nameMod(k);
-      const url = Manifest.url(v, false);
+      const url = Manifest.url(v, true);
       if (url) {
         defs.push(`def ${term(name)} = ${stringLiteral(url)}`)
       } else if (v.list) {
