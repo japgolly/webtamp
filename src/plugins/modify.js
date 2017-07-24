@@ -81,7 +81,7 @@ const stateless = f => main(_ => f);
 
 const widenFilenameTest = t => {
   const test = (t instanceof RegExp) ? f => t.test(f) : t;
-  return i => test(i.filename) || test(i.originallyFrom);
+  return i => test(i.filename) || test(i.originallyFrom.path);
 }
 
 const modifyContent = (testFilename, modify, { failUnlessChange } = {}) => {
