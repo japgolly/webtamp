@@ -146,7 +146,7 @@ const defaultLocalFileValidation = (fs, glob, src) =>
 // fs.length === 0 && `0 files found. (Add {validate: false} to disable this check.)`;
 
 const planCdn =
-  ({ state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity, manifest }) =>
+  ({ state }, defaultAlgos = 'sha256') => inArray => (name, { url, integrity, as, manifest }) =>
   state.checkThenRunIfNoErrors(() => {
     if (!url)
       state.addError(`${name} missing key: url`);
@@ -188,7 +188,9 @@ const planCdn =
     } else
       state.addError(`${desc} has an invalid integrity value: ${JSON.stringify(integrity)}`);
     if (i || i === undefined) {
-      const o = { url, integrity: i };
+      const o = { url };
+      if (i) o.integrity = i;
+      if (as) o.as = as;
       const fnArg = () => o;
       state.registerNow(name);
       state.addUrl(name, Object.assign({ crossorigin: 'anonymous' }, o));

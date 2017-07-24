@@ -309,7 +309,7 @@ describe('Plan', () => {
       it('allows no integrity', () => {
         testOk( //
           { url }, //
-          { url, integrity: undefined });
+          { url });
       });
 
       it('error when no url', () => {

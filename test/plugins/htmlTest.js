@@ -96,6 +96,13 @@ describe('Plugins.Html', () => {
         testPage1(cfg, exp)
       });
 
+      it('link to Google Fonts CSS', () => {
+        const url = 'https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin'
+        const cfg = { assets: { chosen: { type: 'cdn', url, as: 'style' } } };
+        const exp = `<link rel="stylesheet" href="${url}" crossorigin="anonymous">`;
+        testPage1(cfg, exp)
+      });
+
       it('link without integrity', () => {
         const url = 'https://x.com/x.js'
         const cfg = { assets: { chosen: { type: 'cdn', url } } };

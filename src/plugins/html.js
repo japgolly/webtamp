@@ -103,14 +103,14 @@ const tagForUrlEntry = o => {
   };
   const attrs = () => attrArray.join(' ');
 
-  const { url } = o;
-  const urlEscaped = Entities.escape(url);
-  if (/\.js$/.test(url)) {
+  const { url, as } = o;
+  const urlEscaped = url; // Entities.escape(url);
+  if (as === 'script' || /\.js$/.test(url)) {
     add('src', urlEscaped);
     add('integrity');
     add('crossorigin');
     return `<script ${attrs()}></script>`;
-  } else if (/\.css$/.test(url)) {
+  } else if (as === 'style' ||/\.css$/.test(url)) {
     add('href', urlEscaped);
     add('integrity');
     add('crossorigin');

@@ -119,6 +119,10 @@ export default {
       },
 
       // [Optional]
+      // undefined | "style" | "script"
+      as: undefined,
+
+      // [Optional]
       // Bool             - Whether to include this in the manifest.
       // String => String - Function that takes the URL if it is desirable to include it in the manifest,
       //                    returns a manifest name.

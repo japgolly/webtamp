@@ -44,7 +44,7 @@ class State {
   }
 
   addUrl(assetName, url) {
-    assertObject(['url'], ['integrity', 'crossorigin', 'transitive'])(url);
+    assertObject(['url'], ['integrity', 'crossorigin', 'transitive', 'as'])(url);
     if (!this.urls[assetName])
       this.addError(`Asset not registered: ${assetName}`);
     this.urls[assetName].push(url);
