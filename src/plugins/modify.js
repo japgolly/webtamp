@@ -84,9 +84,23 @@ const widenFilenameTest = t => {
   return i => test(i.filename);
 }
 
-const modifyContent = (testFilename, modify) => {
+const modifyContent = (testFilename, modify, { failUnlessChange } = {}) => {
   const test = widenFilenameTest(testFilename);
-  return stateless(i => test(i) && { newContent: modify(i.content()) });
+  return main(s => {
+
+    const done = a => ({ newContent: a });
+
+    const apply = failUnlessChange
+      ? (i, before, after) => {if (before === after) s.addError(`Failed to change ${i.filename}`); else return done(after)}
+      : (i, before, after) => done(after);
+
+    const run = i => {
+      const content = i.content();
+      return apply(i, content, modify(content));
+    }
+
+    return i => test(i) && run(i);
+  });
 }
 
 const rename = (testFilename, modifyFilename) => {
