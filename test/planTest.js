@@ -306,8 +306,10 @@ describe('Plan', () => {
           { url, integrity: `${image2SvgSha384} ${image2SvgSha256}` });
       });
 
-      it('error when no integrity', () => {
-        testErr({ url }, 'x missing key: integrity');
+      it('allows no integrity', () => {
+        testOk( //
+          { url }, //
+          { url, integrity: undefined });
       });
 
       it('error when no url', () => {

@@ -96,6 +96,13 @@ describe('Plugins.Html', () => {
         testPage1(cfg, exp)
       });
 
+      it('link without integrity', () => {
+        const url = 'https://x.com/x.js'
+        const cfg = { assets: { chosen: { type: 'cdn', url } } };
+        const exp = `<script src="${url}" crossorigin="anonymous"></script>`;
+        testPage1(cfg, exp)
+      });
+
       it('loads dependencies in order', () => {
         const cfg = {
           assets: {

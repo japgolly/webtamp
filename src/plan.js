@@ -150,13 +150,14 @@ const planCdn =
   state.checkThenRunIfNoErrors(() => {
     if (!url)
       state.addError(`${name} missing key: url`);
-    if (!integrity)
-      state.addError(`${name} missing key: integrity`);
   }, () => {
     const desc = name;
-    let i; // Option[ValidIntegrityAttribute]
+    let i = false; // Option[ValidIntegrityAttribute]
 
-    if (typeof integrity === 'string')
+    if (!integrity)
+      i = undefined;
+
+    else if (typeof integrity === 'string')
       i = integrity;
 
     // integrity: { files: 'image2.svg', algo: 'sha384' }
@@ -186,7 +187,7 @@ const planCdn =
 
     } else
       state.addError(`${desc} has an invalid integrity value: ${JSON.stringify(integrity)}`);
-    if (i) {
+    if (i || i === undefined) {
       const o = { url, integrity: i };
       const fnArg = () => o;
       state.registerNow(name);
