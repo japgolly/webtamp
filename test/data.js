@@ -19,7 +19,7 @@ const data = {
   jqueryCdn: Object.freeze({
     type: 'cdn',
     url: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js',
-    integrity: 'sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT4‌​4=',
+    integrity: 'sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=',
   }),
 
   bootstrapCssCdn: Object.freeze({
