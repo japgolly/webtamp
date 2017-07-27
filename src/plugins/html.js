@@ -129,24 +129,37 @@ const withTagForUrlEntry = (state, urlEntry, use) => {
 const webtampUrl = /^webtamp:\/\/(.*)$/;
 const webtampManifestPath = /manifest\/(.*)$/;
 const transformWebtampUrls = state => tree => {
+
+  const replaceManifestUrl = string => {
+    let result = string;
+    let m = string.match(webtampUrl);
+    if (m) {
+      const path = m[1];
+
+      // Manifest URLs
+      if (m = path.match(webtampManifestPath)) {
+        const name = m[1];
+        withManifestUrl(state, name, url => result = url);
+      }
+
+      // Invalid URL type
+      else
+        state.addError(`Invalid webtamp url: ${attrValue}`);
+    }
+    return result;
+  }
+
   tree.match({ attrs: true }, node => {
 
-    for (const [attr, attrValue] of Object.entries(node.attrs)) {
-      let m = attrValue.match(webtampUrl);
-      if (m) {
-        const path = m[1];
+    for (const [attr, attrValue] of Object.entries(node.attrs))
+      node.attrs[attr] = replaceManifestUrl(node.attrs[attr]);
 
-        // Manifest URLs
-        if (m = path.match(webtampManifestPath)) {
-          const name = m[1];
-          withManifestUrl(state, name, url => node.attrs[attr] = url);
-        }
-
-        // Invalid URL type
-        else
-          state.addError(`Invalid webtamp url: ${attrValue}`);
-      }
-    }
+    if (node.tag == 'style' && node.content)
+      // node.content is an Array
+      node.content = node.content.map(c =>
+        c.replace(
+          /(url *\( *)(.+?)( *\))/,
+          (m, p1, p2, p3) => `${p1}${replaceManifestUrl(p2)}${p3}`));
 
     return node;
   });

@@ -207,12 +207,13 @@ describe('Plugins.Html', () => {
           const cfg = { assets: { x: { type: 'local', files: '*.svg', manifest: CamelCase } } };
           const expect = c => c
             .replace('webtamp://manifest/image1Svg', '/out-image1.svg')
+            .replace('webtamp://manifest/image3Svg', '/out-image3.svg')
             .replace('webtamp://manifest/image2Svg', '/out-image2.svg');
           pageTest[2].test(cfg, expect);
         });
         it('error when no manifest entry', () => {
           const cfg = { assets: { x: { type: 'local', files: '*.svg' } } };
-          pageTest[2].testError([1, 2].map(i => `Manifest entry not found: image${i}Svg`), cfg);
+          pageTest[2].testError([1, 3, 2].map(i => `Manifest entry not found: image${i}Svg`), cfg);
         });
       });
     });
