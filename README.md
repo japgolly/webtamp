@@ -16,6 +16,7 @@ It does all the things I need to do for my webapp's assets, after I've used webp
 - [Usage](#usage)
 - [Plugins](#plugins)
 - [Example](#example)
+- [Support](#support)
 - [Legal](#legal)
 
 # Features
@@ -225,6 +226,12 @@ And the `dist/index.html` after the `Html.replace` plugin now looks like this:
   </body>
 </html>
 ```
+
+# Support
+If you like what I do
+—my OSS libraries, my contributions to other OSS libs, [my programming blog](https://japgolly.blogspot.com)—
+and you'd like to support me, more content, more lib maintenance, [please become a patron](https://www.patreon.com/japgolly)!
+I do all my OSS work unpaid so showing your support will make a big difference.
 
 
 # Legal
