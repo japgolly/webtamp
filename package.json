@@ -28,9 +28,5 @@
   },
   "engines": {
     "node": ">=7"
-  },
-  "scripts": {
-    "test": "mocha 'test/**/*Test.js'",
-    "watch": "nodemon --watch . -x 'clear;yarn test'"
   }
 }
