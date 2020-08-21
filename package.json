@@ -8,8 +8,8 @@
   },
   "homepage": "https://github.com/japgolly/webtamp",
   "license": "Apache-2.0",
-  "main": "src/main.js",
-  "bin": "src/cli.js",
+  "main": "dist/main.js",
+  "bin": "dist/cli.js",
   "dependencies": {
     "camelcase": "^4.0.0",
     "commander": "^2.9.0",
@@ -23,7 +23,8 @@
   "devDependencies": {
     "chai": "^4.0.2",
     "mocha": "^3.2.0",
-    "nodemon": "^1.11.0"
+    "nodemon": "^1.11.0",
+    "typescript": "^4.0.2"
   },
   "engines": {
     "node": ">=7"
