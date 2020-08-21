@@ -1,6 +1,6 @@
 const
   Path = require('path'),
-  Manifest = require('../manifest');
+  Manifest = require('../manifest'),
   State = require('../state');
 
 const term = n =>

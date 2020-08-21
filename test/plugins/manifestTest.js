@@ -8,6 +8,7 @@ const
   TestData = require('../data'),
   TestUtil = require('../util');
 
+const { assertManifest } = TestUtil
 const { target, vizJs, jqueryCdnM, css1, css2 } = TestData;
 
 const wwJs = { type: 'external', path: '/ww.js', manifest: true };
@@ -20,9 +21,8 @@ describe('Plugins.Manifest', () => {
         assets: { css1 },
         plugins: [ Plugins.Manifest.extractCss({}) ],
       });
-      const filename = "Manifest.scala"
       const state = Plan.run(cfg);
-      Assert.deepEqual(state.manifest, {entries: {
+      assertManifest(state.manifest, {entries: {
         css1: { local: '/1.css' },
         css1Urls: { list: [
           'https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin',

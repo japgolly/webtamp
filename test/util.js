@@ -6,6 +6,10 @@ const
   State = require('../dist/state'),
   tap = require('../dist/utils').tap;
 
+function assertManifest(actual, expect) {
+  Assert.deepEqual(Object.assign({}, actual), expect)
+}
+
 const assertState = normaliseState => (actual, addExpectations) => {
   const expect = new State(actual.src, actual.target);
   addExpectations(expect);
@@ -55,6 +59,7 @@ const assertOps = (ops, opCriteria, expect, normalise) => {
 }
 
 module.exports = {
+  assertManifest,
   assertOps,
   assertState,
   defaultStateNormalisation,

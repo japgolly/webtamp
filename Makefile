@@ -22,7 +22,7 @@ build:
 	$(TSC) --pretty
 
 test: build
-	$(MOCHA) 'test/**/*Test.js'
+	$(MOCHA) --inline-diffs --trace-deprecation 'test/**/*Test.js'
 
 watch:
-	find src | entr -cr make build test
+	find src test yarn.lock Makefile | entr -cr make build test
