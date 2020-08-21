@@ -19,10 +19,10 @@ clean:
 	rm -rf dist
 
 build:
-	$(TSC)
+	$(TSC) --pretty
 
-test:
+test: build
 	$(MOCHA) 'test/**/*Test.js'
 
 watch:
-	$(NODEMON) --watch . -i dist -x 'clear; make build test'
+	find src | entr -cr make build test
