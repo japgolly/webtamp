@@ -3,8 +3,8 @@
 const
   Assert = require('chai').assert,
   CamelCase = require('camelcase'),
-  Plan = require('../../src/plan'),
-  Plugins = require('../../src/plugins'),
+  Plan = require('../../dist/plan'),
+  Plugins = require('../../dist/plugins'),
   TestData = require('../data'),
   TestUtil = require('../util');
 

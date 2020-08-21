@@ -5,11 +5,11 @@ const
   CamelCase = require('camelcase'),
   FS = require('fs'),
   Path = require('path'),
-  Plan = require('../../src/plan'),
-  Plugins = require('../../src/plugins'),
+  Plan = require('../../dist/plan'),
+  Plugins = require('../../dist/plugins'),
   TestData = require('../data'),
   TestUtil = require('../util'),
-  Utils = require('../../src/utils');
+  Utils = require('../../dist/utils');
 
 const { src, target, jqueryCdn, bootstrapCssCdn } = TestData;
 

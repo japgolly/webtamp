@@ -2,9 +2,9 @@
 
 const
   Assert = require('chai').assert,
-  Plan = require('../src/plan'),
-  State = require('../src/state'),
-  tap = require('../src/utils').tap;
+  Plan = require('../dist/plan'),
+  State = require('../dist/state'),
+  tap = require('../dist/utils').tap;
 
 const assertState = normaliseState => (actual, addExpectations) => {
   const expect = new State(actual.src, actual.target);

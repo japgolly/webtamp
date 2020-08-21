@@ -2,7 +2,7 @@
 
 const
   Assert = require('chai').assert,
-  OutputName = require('../src/outputName');
+  OutputName = require('../dist/outputName');
 
 describe('OutputName', () => {
   describe('make', () => {

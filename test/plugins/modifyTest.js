@@ -2,8 +2,8 @@
 
 const
   Assert = require('chai').assert,
-  Plan = require('../../src/plan'),
-  Plugins = require('../../src/plugins'),
+  Plan = require('../../dist/plan'),
+  Plugins = require('../../dist/plugins'),
   TestData = require('../data');
 
 const { src, target, jqueryCdnM, jqueryUrlEntry, jqueryManifestEntry } = TestData;

@@ -3,11 +3,11 @@
 const
   Assert = require('chai').assert,
   Path = require('path'),
-  Plan = require('../src/plan'),
-  State = require('../src/state'),
+  Plan = require('../dist/plan'),
+  State = require('../dist/state'),
   TestData = require('./data'),
   TestUtil = require('./util'),
-  LocalSrc = require('../src/utils').LocalSrc;
+  LocalSrc = require('../dist/utils').LocalSrc;
 
 const { vizJs, vizJsExplicit, image1SvgSha256, image2SvgSha256, image2SvgSha384, jqueryUrl, src, target } = TestData;
 

@@ -4,11 +4,11 @@ const
   Assert = require('chai').assert,
   CamelCase = require('camelcase'),
   Path = require('path'),
-  Plan = require('../../src/plan'),
-  Plugins = require('../../src/plugins'),
+  Plan = require('../../dist/plan'),
+  Plugins = require('../../dist/plugins'),
   TestData = require('../data'),
   TestUtil = require('../util'),
-  LocalSrc = require('../../src/utils').LocalSrc;
+  LocalSrc = require('../../dist/utils').LocalSrc;
 
 const { src, target } = TestData;
 const testPlan = TestUtil.testPlan();
