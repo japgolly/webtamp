@@ -4,11 +4,11 @@ const
   Assert = require('chai').assert,
   CamelCase = require('camelcase'),
   Path = require('path'),
-  Plan = require('../../src/plan'),
-  Plugins = require('../../src/plugins'),
+  Plan = require('../../dist/plan'),
+  Plugins = require('../../dist/plugins'),
   TestData = require('../data'),
   TestUtil = require('../util'),
-  LocalSrc = require('../../src/utils').LocalSrc;
+  LocalSrc = require('../../dist/types').LocalSrc;
 
 const { src, target } = TestData;
 const testPlan = TestUtil.testPlan();
@@ -23,7 +23,7 @@ describe('Plugins.Inline', () => {
       const add = o => {
         const o2 = Object.assign({}, o);
         delete o2.size;
-        delete o2.stat;
+        delete o2.stats;
         seen.push(o2);
         return false;
       }

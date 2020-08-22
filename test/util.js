@@ -2,9 +2,15 @@
 
 const
   Assert = require('chai').assert,
-  Plan = require('../src/plan'),
-  State = require('../src/state'),
-  tap = require('../src/utils').tap;
+  Plan = require('../dist/plan'),
+  State = require('../dist/state').default,
+  tap = require('../dist/utils').tap;
+
+function assertManifest(actual, expect) {
+  const a = Object.assign({}, actual)
+  delete a.state
+  Assert.deepEqual(a, expect)
+}
 
 const assertState = normaliseState => (actual, addExpectations) => {
   const expect = new State(actual.src, actual.target);
@@ -16,6 +22,12 @@ const assertState = normaliseState => (actual, addExpectations) => {
 };
 
 const identity = a => a;
+
+const removeManifestState = m => {
+  const o = Object.assign({}, m)
+  delete o.manifest.state
+  return o
+};
 
 const removeGraph = tap(r => delete r.graph);
 
@@ -41,7 +53,7 @@ const simplifyTypes = tap(r => {
 });
 
 const defaultStateNormalisation = s =>
-  removeGraph(simplifyTypes(s.results()));
+  removeGraph(simplifyTypes(removeManifestState(s.results())));
 
 const testPlan = (normaliseState = defaultStateNormalisation) => {
   const f = assertState(normaliseState);
@@ -55,6 +67,7 @@ const assertOps = (ops, opCriteria, expect, normalise) => {
 }
 
 module.exports = {
+  assertManifest,
   assertOps,
   assertState,
   defaultStateNormalisation,
