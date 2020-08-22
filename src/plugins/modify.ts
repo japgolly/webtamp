@@ -119,5 +119,57 @@ export const rename = (testFilename: FilenameTest, modifyFilename: (_: string) =
   return stateless(i => test(i) && { newFilename: modifyFilename(i.filename) })
 }
 
+export type ReplaceWebtampUrlOptions = {
+  testFilename  : FilenameTest
+  urlPattern?   : RegExp | Array<RegExp>
+  urlQuotes?    : Array<string | [string, string?]>
+  preprocessUrl?: (url: string) => (string | Falsy)
+  allowCDN?     : boolean
+}
+
+export const replaceWebtampUrls: (_: ReplaceWebtampUrlOptions) => Plugin = opts => {
+  const test = widenFilenameTest(opts.testFilename)
+
+  const urlPatterns = Utils.asArray(opts.urlPattern ?? [])
+  if (opts.urlQuotes)
+    for (const q of opts.urlQuotes) {
+      const [q1, q2] = typeof q === 'string' ? [q, q] : [q[0], q[1] || q[0]]
+      const r1 = Utils.escapeRegExp(q1)
+      const r2 = Utils.escapeRegExp(q2)
+      const r = new RegExp(`(?<=${r1}).+?(?=${r2})`, "g")
+      urlPatterns.push(r)
+    }
+
+  const preprocessUrl = opts.preprocessUrl ?? (u => u)
+
+  const allowCDN = opts.allowCDN ?? true
+
+  if (urlPatterns.length == 0)
+    return s => s.addWarn(`No url patterns or quotes defined in: ${JSON.stringify(opts)}`)
+  else
+    return main(state => i => {
+
+      const replaceUrl = (origUrl: string): string => {
+        const url = preprocessUrl(origUrl)
+        if (url) {
+          const newUrl = state.resolveWebtampUrl(url, allowCDN)
+          return newUrl ?? url
+        } else
+          return origUrl
+      }
+
+      const doIt = (i: LogicInput): LogicResult => {
+        const orig = i.content()
+        let result = orig
+        for (const urlPattern of urlPatterns) {
+          result = result.replace(urlPattern, replaceUrl)
+        }
+        return (result !== orig) && { newContent: result }
+      }
+
+      return test(i) && doIt(i)
+    })
+}
+
 export const content = modifyContent
 export const stateful = main

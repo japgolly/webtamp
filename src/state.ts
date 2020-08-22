@@ -1,7 +1,6 @@
 import { assertObject, fixRelativePath, opReduce } from './utils'
-import { Manifest } from './manifest'
+import { Manifest, Entry } from './manifest'
 import {
-  FileContent,
   LocalSrc,
   ObjectTo,
   Op,
@@ -219,6 +218,37 @@ export default class State {
       manifest: this.manifest,
       graph: this.graph,
     }
+  }
+
+  resolveWebtampUrlEntry(url: string): Entry | undefined {
+    let m = url.match(/^webtamp:\/\/(.*)$/)
+    if (!m)
+      return
+    const path = m[1]
+
+    // Manifest URLs
+    if (m = path.match(/manifest\/(.*)$/)) {
+      const name = m[1]
+      const entry = this.manifest.getEntries()[name];
+      if (entry === undefined)
+        this.addError(`Manifest entry not found: ${name}`);
+      else
+        return entry
+    }
+
+    // Invalid URL type
+    else
+      this.addError(`Invalid webtamp url: ${url}`)
+  }
+
+  resolveWebtampUrl(url: string, allowCdn: boolean): string | undefined {
+    const e = this.resolveWebtampUrlEntry(url)
+    if (!e)
+      return
+    const result = Manifest.url(e, allowCdn)
+    if (result)
+      return result
+    this.addError(`Unable to discern URL for manifest entry: {${url}: ${e}}`)
   }
 
   static opContent: (op: Op) => string =

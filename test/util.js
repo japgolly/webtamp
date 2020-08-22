@@ -4,7 +4,8 @@ const
   Assert = require('chai').assert,
   Plan = require('../dist/plan'),
   State = require('../dist/state').default,
-  tap = require('../dist/utils').tap;
+  tap = require('../dist/utils').tap,
+  TestData = require('./data');
 
 function assertManifest(actual, expect) {
   const a = Object.assign({}, actual)
@@ -66,9 +67,18 @@ const assertOps = (ops, opCriteria, expect, normalise) => {
   Assert.deepEqual(actual, normArray(expect).sort());
 }
 
+const assertWriteOp = (ops, toPath, expectedContent, normalise) => {
+  assertOps(ops, op => op.to.path === toPath, [{
+    type: 'write',
+    to: [TestData.target, toPath],
+    content: expectedContent,
+  }], normalise)
+}
+
 module.exports = {
   assertManifest,
   assertOps,
+  assertWriteOp,
   assertState,
   defaultStateNormalisation,
   testPlan,

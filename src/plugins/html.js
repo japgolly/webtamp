@@ -120,28 +120,10 @@ const withTagForUrlEntry = (state, urlEntry, use) => {
     state.addError("Don't know what kind of HTML tag is needed to load: " + urlEntry.url);
 };
 
-const webtampUrl = /^webtamp:\/\/(.*)$/;
-const webtampManifestPath = /manifest\/(.*)$/;
 const transformWebtampUrls = state => tree => {
 
-  const replaceManifestUrl = string => {
-    let result = string;
-    let m = string.match(webtampUrl);
-    if (m) {
-      const path = m[1];
-
-      // Manifest URLs
-      if (m = path.match(webtampManifestPath)) {
-        const name = m[1];
-        withManifestUrl(state, name, url => result = url);
-      }
-
-      // Invalid URL type
-      else
-        state.addError(`Invalid webtamp url: ${attrValue}`);
-    }
-    return result;
-  }
+  const replaceManifestUrl = string =>
+    state.resolveWebtampUrl(string, true) || string
 
   tree.match({ attrs: true }, node => {
 
@@ -167,15 +149,6 @@ const withManifestEntry = (state, name, use) => {
   else
     return use(entry);
 }
-
-const withManifestUrl = (state, name, use) =>
-  withManifestEntry(state, name, entry => {
-    const url = Manifest.url(entry, true);
-    if (url)
-      return use(url);
-    else
-      state.addError(`Unable to discern URL for manifest entry: {${name}: ${entry}}`);
-  });
 
 const minifyPlugin = ({ test = isHtmlFile, options = {} } = {}) =>
   Modify.content(/\.html$/, html =>

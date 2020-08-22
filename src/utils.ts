@@ -113,3 +113,7 @@ export function removeUndefinedValues<A>(a: A): A {
   } else
     return a
 }
+
+export function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // $& means the whole matched string
+}
