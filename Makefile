@@ -30,3 +30,5 @@ watch:
 
 publish: clean test
 	npm publish
+	git push
+	git push --tags
