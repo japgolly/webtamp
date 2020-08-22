@@ -1,16 +1,10 @@
 "use strict";
 
 const
-  Entities = require("entities"),
-  FS = require('fs'),
   HtmlMinifier = require('html-minifier'),
-  Manifest = require('../manifest'),
-  Mime = require('mime-types'),
+  Manifest = require('../manifest').Manifest,
   Modify = require('./modify'),
-  Path = require('path'),
-  PostHtml = require('posthtml'),
-  State = require('../state'),
-  Utils = require('../utils');
+  PostHtml = require('posthtml');
 
 const isHtmlFile = i => /\.html$/.test(i.filename);
 
@@ -187,7 +181,5 @@ const minifyPlugin = ({ test = isHtmlFile, options = {} } = {}) =>
   Modify.content(/\.html$/, html =>
     HtmlMinifier.minify(html, options))
 
-module.exports = {
-  minify: minifyPlugin,
-  replace: replacementPlugin,
-};
+export const minify = minifyPlugin
+export const replace = replacementPlugin

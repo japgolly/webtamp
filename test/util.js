@@ -3,11 +3,13 @@
 const
   Assert = require('chai').assert,
   Plan = require('../dist/plan'),
-  State = require('../dist/state'),
+  State = require('../dist/state').default,
   tap = require('../dist/utils').tap;
 
 function assertManifest(actual, expect) {
-  Assert.deepEqual(Object.assign({}, actual), expect)
+  const a = Object.assign({}, actual)
+  delete a.state
+  Assert.deepEqual(a, expect)
 }
 
 const assertState = normaliseState => (actual, addExpectations) => {
@@ -20,6 +22,12 @@ const assertState = normaliseState => (actual, addExpectations) => {
 };
 
 const identity = a => a;
+
+const removeManifestState = m => {
+  const o = Object.assign({}, m)
+  delete o.manifest.state
+  return o
+};
 
 const removeGraph = tap(r => delete r.graph);
 
@@ -45,7 +53,7 @@ const simplifyTypes = tap(r => {
 });
 
 const defaultStateNormalisation = s =>
-  removeGraph(simplifyTypes(s.results()));
+  removeGraph(simplifyTypes(removeManifestState(s.results())));
 
 const testPlan = (normaliseState = defaultStateNormalisation) => {
   const f = assertState(normaliseState);

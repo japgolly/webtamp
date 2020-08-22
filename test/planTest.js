@@ -4,10 +4,10 @@ const
   Assert = require('chai').assert,
   Path = require('path'),
   Plan = require('../dist/plan'),
-  State = require('../dist/state'),
+  State = require('../dist/state').default,
   TestData = require('./data'),
   TestUtil = require('./util'),
-  LocalSrc = require('../dist/utils').LocalSrc;
+  LocalSrc = require('../dist/types').LocalSrc;
 
 const { vizJs, vizJsExplicit, image1SvgSha256, image2SvgSha256, image2SvgSha384, jqueryUrl, src, target } = TestData;
 
@@ -313,7 +313,7 @@ describe('Plan', () => {
       });
 
       it('error when no url', () => {
-        testErr({ integrity: image2SvgSha256 }, 'x missing key: url');
+        testErr({ integrity: image2SvgSha256 }, 'Invalid config in x: url is missing.');
       });
 
       it('error when no files match', () => {
