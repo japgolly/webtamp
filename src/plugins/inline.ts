@@ -56,7 +56,7 @@ export const data: (_: Criteria) => Plugin = criteria => state => {
           size: () => op.content.length,
           dest,
         }
-        inline(op, arg, () => new Buffer(op.content))
+        inline(op, arg, () => Buffer.from(op.content))
         i = 0
       } else if (op.type === 'copy' && op.to.path === dest) {
         const arg = {
