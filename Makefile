@@ -9,10 +9,11 @@ info:
 	@echo
 	@echo "Commands:"
 	@echo
-	@echo "  * clean -- Remove generated output."
-	@echo "  * build -- Compiles Typescript to Javascript."
-	@echo "  * test  -- Run tests."
-	@echo "  * watch -- Watches for changes, compiles and runs tests."
+	@echo "  * build   -- Compiles Typescript to Javascript."
+	@echo "  * clean   -- Remove generated output."
+	@echo "  * publish -- Builds and publishes."
+	@echo "  * test    -- Run tests."
+	@echo "  * watch   -- Watches for changes, compiles and runs tests."
 	@echo
 
 clean:
@@ -26,3 +27,6 @@ test: build
 
 watch:
 	find src test yarn.lock Makefile *.json -type f | entr -cr make build test
+
+publish: clean test
+	npm publish
