@@ -55,7 +55,7 @@ const scala: (_: ScalaArgs) => Plugin = args => state => {
     abstract ? s => `modify(${s})` : s => s
 
   const def: String =
-    abstract ? "val" : "def"
+    abstract ? "final val" : "def"
 
   const fqcn = object.match(/^(.+)\.([^.]+)$/)
   if (!fqcn) {
@@ -77,7 +77,7 @@ const scala: (_: ScalaArgs) => Plugin = args => state => {
         cdnUsed = true
         const {url, integrity} = v.cdn
         const i = integrity ? `Some(${stringLiteral(integrity)})` : 'None'
-        defs.push(`${def} ${term(name)} = CDN(\n  href = ${modify(stringLiteral(url))},\n  integrity = ${i})`)
+        defs.push(`${def} ${term(name)} = CDN(\n  href = ${stringLiteral(url)},\n  integrity = ${i})`)
       } else if (url) {
         defs.push(`${def} ${term(name)} = ${modify(stringLiteral(url))}`)
       } else if (v.list) {
@@ -100,12 +100,12 @@ const scala: (_: ScalaArgs) => Plugin = args => state => {
         lines.push("}")
         lines.push("")
       }
-      lines.push(`abstract class ${obj} {`)
+      lines.push(`abstract class ${obj}[+A] {`)
       if (cdnUsed) {
         lines.push(`  import ${obj}._`)
         lines.push('')
       }
-      lines.push('  protected def modify(f: String => String): String')
+      lines.push('  protected def modify(f: String): A')
       lines.push('')
 
     } else {

@@ -134,14 +134,14 @@ object Manifest {
   final case class CDN(href: String, integrity: Option[String])
 }
 
-abstract class Manifest {
+abstract class Manifest[+A] {
   import Manifest._
 
-  protected def modify(f: String => String): String
+  protected def modify(f: String): A
 
-  val css1 = modify("/1-24299309df91abd8.css")
+  final val css1 = modify("/1-24299309df91abd8.css")
 
-  val css1Urls: List[String] =
+  final val css1Urls: List[String] =
     modify("https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin") ::
     modify("icons.eot") ::
     modify("icons.eot?#iefix") ::
@@ -151,22 +151,22 @@ abstract class Manifest {
     modify("icons.svg#icons") ::
     Nil
 
-  val css2 = modify("/2-469d3cc8794b9f5a.css")
+  final val css2 = modify("/2-469d3cc8794b9f5a.css")
 
-  val css2Urls: List[String] =
+  final val css2Urls: List[String] =
     Nil
 
-  val image1Svg = modify("/image1-03f43b8f2e62bd8d.svg")
+  final val image1Svg = modify("/image1-03f43b8f2e62bd8d.svg")
 
-  val image2Svg = modify("data:image/svg+xml;base64,aW1hZ2UyCg==")
+  final val image2Svg = modify("data:image/svg+xml;base64,aW1hZ2UyCg==")
 
-  val jquery = CDN(
-    href = modify("https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"),
+  final val jquery = CDN(
+    href = "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js",
     integrity = Some("sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="))
 
-  val vizJs = modify("/viz-e4e91995e194dd59.js")
+  final val vizJs = modify("/viz-e4e91995e194dd59.js")
 
-  val wwJs = modify("/ww.js")
+  final val wwJs = modify("/ww.js")
 }
         `.trim()
       }]);
