@@ -141,7 +141,7 @@ abstract class Manifest[+A] {
 
   final val css1 = modify("/1-24299309df91abd8.css")
 
-  final val css1Urls: List[String] =
+  final val css1Urls: List[A] =
     modify("https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin") ::
     modify("icons.eot") ::
     modify("icons.eot?#iefix") ::
@@ -153,7 +153,7 @@ abstract class Manifest[+A] {
 
   final val css2 = modify("/2-469d3cc8794b9f5a.css")
 
-  final val css2Urls: List[String] =
+  final val css2Urls: List[A] =
     Nil
 
   final val image1Svg = modify("/image1-03f43b8f2e62bd8d.svg")

@@ -57,6 +57,9 @@ const scala: (_: ScalaArgs) => Plugin = args => state => {
   const def: String =
     abstract ? "final val" : "def"
 
+  const type: String =
+    abstract ? "A" : "String"
+
   const fqcn = object.match(/^(.+)\.([^.]+)$/)
   if (!fqcn) {
     state.addError(`Invalid object FQCN: ${object}`)
@@ -82,7 +85,7 @@ const scala: (_: ScalaArgs) => Plugin = args => state => {
         defs.push(`${def} ${term(name)} = ${modify(stringLiteral(url))}`)
       } else if (v.list) {
         const vs = v.list.map(i => `\n  ${modify(stringLiteral(i))} ::`).join('')
-        defs.push(`${def} ${term(name)}: List[String] =${vs}\n  Nil`)
+        defs.push(`${def} ${term(name)}: List[${type}] =${vs}\n  Nil`)
       }
 
       // final case class Resource(url: String, integrity: Option[String])
